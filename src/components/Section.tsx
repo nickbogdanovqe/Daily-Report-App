@@ -4,31 +4,51 @@ type SectionVariant = 'tasks' | 'blockers' | 'highlights' | 'defects'
 
 const VARIANT_STYLES: Record<
   SectionVariant,
-  { accent: string; iconBg: string; iconColor: string; label: string }
+  {
+    accent: string
+    iconBg: string
+    iconColor: string
+    label: string
+    cardBg: string
+    hoverBg: string
+    divider: string
+  }
 > = {
   tasks: {
     accent: 'border-l-blue-500',
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
     label: 'Tasks',
+    cardBg: 'bg-white/95',
+    hoverBg: 'hover:bg-slate-50/80',
+    divider: 'border-slate-100',
   },
   blockers: {
-    accent: 'border-l-red-500',
+    accent: 'border-l-red-600',
     iconBg: 'bg-red-100',
     iconColor: 'text-red-600',
     label: 'Blockers',
+    cardBg: 'bg-red-50/80',
+    hoverBg: 'hover:bg-red-50',
+    divider: 'border-red-100',
   },
   highlights: {
     accent: 'border-l-emerald-500',
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
     label: 'Wins',
+    cardBg: 'bg-white/95',
+    hoverBg: 'hover:bg-slate-50/80',
+    divider: 'border-slate-100',
   },
   defects: {
     accent: 'border-l-violet-500',
     iconBg: 'bg-violet-100',
     iconColor: 'text-violet-600',
     label: 'QA',
+    cardBg: 'bg-white/95',
+    hoverBg: 'hover:bg-slate-50/80',
+    divider: 'border-slate-100',
   },
 }
 
@@ -82,12 +102,12 @@ export function Section({
 
   return (
     <section
-      className={`overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/95 shadow-lg shadow-slate-200/50 ring-1 ring-slate-900/5 backdrop-blur border-l-4 ${style.accent}`}
+      className={`overflow-hidden rounded-[1.5rem] border border-slate-200/80 shadow-lg shadow-slate-200/50 ring-1 ring-slate-900/5 backdrop-blur border-l-4 ${style.accent} ${style.cardBg}`}
     >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-slate-50/80"
+        className={`flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition ${style.hoverBg}`}
       >
         <span className="flex items-center gap-3">
           <span
@@ -109,7 +129,7 @@ export function Section({
           {open ? '−' : '+'}
         </span>
       </button>
-      {open && <div className="border-t border-slate-100 px-5 pb-5 pt-4">{children}</div>}
+      {open && <div className={`border-t px-5 pb-5 pt-4 ${style.divider}`}>{children}</div>}
     </section>
   )
 }

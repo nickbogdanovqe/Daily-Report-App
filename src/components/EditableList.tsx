@@ -62,7 +62,11 @@ function SortableRow({
       >
         <GripIcon />
       </button>
-      <div className="grid flex-1 gap-2 sm:grid-cols-[minmax(0,1fr)_130px]">
+      <div
+        className={`grid flex-1 gap-2 ${
+          showJiraId ? 'sm:grid-cols-[minmax(0,1fr)_130px]' : 'grid-cols-1'
+        }`}
+      >
         <input
           type="text"
           value={item.text}

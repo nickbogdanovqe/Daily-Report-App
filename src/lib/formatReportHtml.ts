@@ -8,13 +8,16 @@ import {
 } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
-const FONT = 'Aptos, Calibri, Segoe UI, sans-serif'
+const FONT = 'Segoe UI, Aptos, Calibri, sans-serif'
 const WIDTH = 760
 const BODY_COLOR = '#323130'
 const HEADING_COLOR = '#0050B5'
 const HEADER_BG = '#0050B5'
 const BORDER = '#B4B4B4'
 const ALT_ROW = '#F3F2F1'
+const SOFT_BLUE = '#EAF2FF'
+const BLOCKER_COLOR = '#B91C1C'
+const SOFT_RED = '#FEF2F2'
 
 function formatDateLong(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`)
@@ -45,16 +48,49 @@ function jiraHref(jiraBaseUrl: string, jiraId: string): string {
     : `${cleanBase}/browse/${encodeURIComponent(id)}`
 }
 
-/** Outlook-friendly label cell (no border-radius, no inline-block) */
-function labelCell(text: string, bg: string, color: string): string {
-  return `<span style="font-family:${FONT};font-size:10pt;font-weight:bold;color:${color};background-color:${bg};padding:2px 8px;mso-padding-alt:2px 8px;">${escapeHtml(text)}</span>`
+function jiraBadge(
+  jiraId: string,
+  jiraBaseUrl: string,
+  color = HEADING_COLOR,
+  background = SOFT_BLUE,
+  border = '#BBD4F5',
+): string {
+  const id = jiraId.trim().toUpperCase()
+  if (!id) return ''
+
+  const href = jiraHref(jiraBaseUrl, id)
+  const content = escapeHtml(id)
+  const style = `font-family:${FONT};font-size:10.5pt;font-weight:bold;color:${color};background-color:${background};border:1px solid ${border};padding:2px 7px;text-decoration:none;`
+
+  if (href) {
+    return `<a href="${escapeHtml(href)}" style="${style}">${content}</a>&nbsp;`
+  }
+
+  return `<span style="${style}">${content}</span>&nbsp;`
 }
 
-function sectionHeading(title: string): string {
+/** Outlook-friendly label cell (no border-radius, no inline-block) */
+function labelCell(text: string, bg: string, color: string): string {
+  return `<span style="font-family:${FONT};font-size:11pt;font-weight:bold;color:${color};background-color:${bg};padding:3px 9px;mso-padding-alt:3px 9px;">${escapeHtml(text)}</span>`
+}
+
+function sectionHeading(
+  title: string,
+  color = HEADING_COLOR,
+  background = SOFT_BLUE,
+  border = '#BBD4F5',
+): string {
   return `
     <tr>
-      <td style="padding:18px 0 6px 0;font-family:${FONT};font-size:12pt;font-weight:bold;color:${HEADING_COLOR};border-bottom:2px solid ${HEADING_COLOR};">
-        ${escapeHtml(title)}
+      <td style="padding:18px 0 8px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;background-color:${background};border:1px solid ${border};">
+          <tr>
+            <td width="6" bgcolor="${color}" style="width:6px;background-color:${color};font-size:1px;line-height:1px;">&nbsp;</td>
+            <td style="padding:8px 12px;font-family:${FONT};font-size:13pt;font-weight:bold;color:${color};">
+              ${escapeHtml(title)}
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>`
 }
@@ -64,45 +100,56 @@ function bulletRows(
   emptyText: string,
   jiraBaseUrl = '',
   showJiraId = false,
+  bulletColor = HEADING_COLOR,
 ): string {
   const filled = items.filter((i) => i.text.trim())
   if (filled.length === 0) {
     return `
     <tr>
-      <td style="padding:4px 0 8px 0;font-family:${FONT};font-size:11pt;color:#605E5C;font-style:italic;">
+      <td style="padding:5px 0 9px 0;font-family:${FONT};font-size:12pt;color:#605E5C;font-style:italic;">
         ${escapeHtml(emptyText)}
       </td>
     </tr>`
   }
   return filled
     .map((item) => {
-      const jiraId = (item.jiraId ?? '').trim().toUpperCase()
-      const href = showJiraId ? jiraHref(jiraBaseUrl, jiraId) : ''
-      const jiraLabel = showJiraId && jiraId
-        ? href
-          ? `<a href="${escapeHtml(href)}" style="color:${HEADING_COLOR};font-weight:bold;text-decoration:underline;">${escapeHtml(jiraId)}</a>&nbsp;`
-          : `<strong style="color:${HEADING_COLOR};">${escapeHtml(jiraId)}</strong>&nbsp;`
+      const jiraLabel = showJiraId
+        ? jiraBadge(
+            item.jiraId ?? '',
+            jiraBaseUrl,
+            bulletColor,
+            bulletColor === BLOCKER_COLOR ? SOFT_RED : SOFT_BLUE,
+            bulletColor === BLOCKER_COLOR ? '#FCA5A5' : '#BBD4F5',
+          )
         : ''
 
       return `
     <tr>
-      <td style="padding:3px 0 3px 12px;font-family:${FONT};font-size:11pt;line-height:1.45;color:${BODY_COLOR};">
-        <span style="font-family:${FONT};color:${HEADING_COLOR};font-weight:bold;">&#8226;&nbsp;</span>${jiraLabel}${escapeHtml(item.text.trim())}
+      <td style="padding:4px 0 4px 14px;font-family:${FONT};font-size:12pt;line-height:1.5;color:${BODY_COLOR};">
+        <span style="font-family:${FONT};color:${bulletColor};font-weight:bold;">&#8226;&nbsp;</span>${jiraLabel}${escapeHtml(item.text.trim())}
       </td>
     </tr>`
     })
     .join('')
 }
 
-function kpiCell(label: string, valueHtml: string, accent = HEADING_COLOR): string {
+function kpiCell(
+  label: string,
+  valueHtml: string,
+  helperText: string,
+  accent = HEADING_COLOR,
+): string {
   return `
-    <td width="33.33%" valign="top" style="padding:4px;">
-      <table width="100%" height="86" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid ${BORDER};background-color:#FFFFFF;height:86px;">
+    <td width="33.33%" valign="top" style="padding:5px;">
+      <table width="100%" height="112" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid #BBD4F5;background-color:#FFFFFF;height:112px;">
         <tr>
-          <td width="4" bgcolor="${accent}" style="width:4px;background-color:${accent};font-size:1px;line-height:1px;">&nbsp;</td>
-          <td valign="top" style="padding:11px 12px 10px 12px;font-family:${FONT};height:64px;">
-            <p style="margin:0 0 7px 0;font-size:8.5pt;line-height:1.2;font-weight:bold;color:#605E5C;text-transform:uppercase;letter-spacing:.3px;">${escapeHtml(label)}</p>
-            <div style="font-family:${FONT};font-size:11pt;line-height:1.35;color:${BODY_COLOR};">${valueHtml}</div>
+          <td bgcolor="${accent}" style="height:5px;background-color:${accent};font-size:1px;line-height:1px;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td valign="top" style="padding:13px 14px 12px 14px;font-family:${FONT};height:86px;">
+            <p style="margin:0 0 7px 0;font-size:9pt;line-height:1.2;font-weight:bold;color:${HEADING_COLOR};text-transform:uppercase;letter-spacing:.6px;">${escapeHtml(label)}</p>
+            <div style="font-family:${FONT};font-size:13pt;line-height:1.25;font-weight:bold;color:#172B4D;">${valueHtml}</div>
+            <p style="margin:7px 0 0 0;font-family:${FONT};font-size:9.5pt;line-height:1.3;color:#605E5C;">${escapeHtml(helperText)}</p>
           </td>
         </tr>
       </table>
@@ -119,6 +166,7 @@ export function formatReportBody(draft: Draft): string {
   const openCount = defects.filter(
     (d) => d.status === 'Open' || d.status === 'New' || d.status === 'In progress',
   ).length
+  const closedCount = Math.max(defects.length - openCount, 0)
 
   const summaryBlock = draft.summary.trim()
     ? `
@@ -126,9 +174,9 @@ export function formatReportBody(draft: Draft): string {
       <td style="padding:0 0 4px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid ${BORDER};background-color:#F8F9FA;">
           <tr>
-            <td style="padding:12px 14px;font-family:${FONT};">
-              <p style="margin:0 0 6px 0;font-size:10pt;font-weight:bold;color:${HEADING_COLOR};">Summary</p>
-              <p style="margin:0;font-size:11pt;line-height:1.5;color:${BODY_COLOR};">${escapeHtml(draft.summary.trim())}</p>
+            <td style="padding:14px 16px;font-family:${FONT};">
+              <p style="margin:0 0 7px 0;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};">Summary</p>
+              <p style="margin:0;font-size:12pt;line-height:1.55;color:${BODY_COLOR};">${escapeHtml(draft.summary.trim())}</p>
             </td>
           </tr>
         </table>
@@ -140,31 +188,32 @@ export function formatReportBody(draft: Draft): string {
     defects.length === 0
       ? `
     <tr>
-      <td style="padding:4px 0 8px 0;font-family:${FONT};font-size:11pt;color:#605E5C;font-style:italic;">None reported</td>
+      <td style="padding:5px 0 9px 0;font-family:${FONT};font-size:12pt;color:#605E5C;font-style:italic;">None reported</td>
     </tr>`
       : `
     <tr>
       <td style="padding:4px 0 8px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" border="1" role="presentation" style="border-collapse:collapse;border-color:${BORDER};font-family:${FONT};">
           <tr style="background-color:#E8EEF4;">
-            <th align="left" style="padding:8px 10px;font-size:10pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Status</th>
-            <th align="left" style="padding:8px 10px;font-size:10pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Defect</th>
-            <th align="left" style="padding:8px 10px;font-size:10pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Notes</th>
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Status</th>
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Defect</th>
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Notes</th>
           </tr>
           ${defects
             .map((d, i) => {
               const st = statusColors(d.status)
               const rowBg = i % 2 === 1 ? ALT_ROW : '#FFFFFF'
               const link = normalizeLink(d.link)
+              const defectJiraBadge = jiraBadge(d.jiraId ?? '', draft.jiraBaseUrl)
               const defectTitle = escapeHtml(d.title.trim())
               const defectCell = link
                 ? `<a href="${escapeHtml(link)}" style="color:${HEADING_COLOR};font-weight:bold;text-decoration:underline;">${defectTitle}</a>`
                 : defectTitle
               return `
           <tr style="background-color:${rowBg};">
-            <td valign="top" style="padding:8px 10px;border:1px solid ${BORDER};white-space:nowrap;">${labelCell(d.status, st.bg, st.text)}</td>
-            <td valign="top" style="padding:8px 10px;border:1px solid ${BORDER};font-size:11pt;font-weight:bold;color:${BODY_COLOR};">${defectCell}</td>
-            <td valign="top" style="padding:8px 10px;border:1px solid ${BORDER};font-size:10pt;color:#605E5C;">${d.note.trim() ? escapeHtml(d.note.trim()) : '—'}</td>
+            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};white-space:nowrap;">${labelCell(d.status, st.bg, st.text)}</td>
+            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};font-size:12pt;font-weight:bold;color:${BODY_COLOR};">${defectJiraBadge}${defectCell}</td>
+            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};font-size:11pt;color:#605E5C;">${d.note.trim() ? escapeHtml(d.note.trim()) : '—'}</td>
           </tr>`
             })
             .join('')}
@@ -175,13 +224,22 @@ export function formatReportBody(draft: Draft): string {
   return `
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;font-family:${FONT};">
   <tr>
-    <td bgcolor="${HEADER_BG}" style="background-color:${HEADER_BG};padding:20px 24px;">
-      <p style="margin:0 0 4px 0;font-family:${FONT};font-size:9pt;font-weight:bold;color:#B4C7E7;text-transform:uppercase;letter-spacing:1px;">Aurora Mobile</p>
-      <p style="margin:0;font-family:${FONT};font-size:16pt;font-weight:bold;color:#FFFFFF;">Daily QA Status Report</p>
+    <td style="padding:0;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid #BBD4F5;">
+        <tr>
+          <td bgcolor="${HEADER_BG}" style="background-color:${HEADER_BG};height:8px;font-size:1px;line-height:1px;">&nbsp;</td>
+        </tr>
+        <tr>
+          <td bgcolor="#F7FAFF" style="background-color:#F7FAFF;padding:20px 24px 22px 24px;">
+            <p style="margin:0 0 6px 0;font-family:${FONT};font-size:10pt;font-weight:bold;color:${HEADING_COLOR};text-transform:uppercase;letter-spacing:1.2px;">Aurora Mobile</p>
+            <p style="margin:0;font-family:${FONT};font-size:21pt;line-height:1.2;font-weight:bold;color:#172B4D;">Daily QA Status Report</p>
+          </td>
+        </tr>
+      </table>
     </td>
   </tr>
   <tr>
-    <td style="padding:16px 0 0 0;font-family:${FONT};font-size:11pt;line-height:1.5;color:${BODY_COLOR};">
+    <td style="padding:18px 0 0 0;font-family:${FONT};font-size:12pt;line-height:1.55;color:${BODY_COLOR};">
       <p style="margin:0;">Hi team,</p>
       <p style="margin:8px 0 0 0;">Please find below my daily status update for <strong>Aurora Mobile</strong> (${escapeHtml(formatDateLong(draft.reportDate))}).</p>
     </td>
@@ -193,15 +251,18 @@ export function formatReportBody(draft: Draft): string {
           ${kpiCell(
             'Report date',
             `<strong style="color:${BODY_COLOR};">${escapeHtml(formatDateLong(draft.reportDate))}</strong>`,
+            'Daily snapshot',
           )}
           ${kpiCell(
             'Overall status',
             labelCell(overallLabel, overall.bg, overall.text),
+            'Current QA posture',
             overall.text,
           )}
           ${kpiCell(
             'Defects',
             `<strong>${defects.length}</strong> total&nbsp;&nbsp; <span style="color:${HEADING_COLOR};"><strong>${openCount}</strong> open</span>`,
+            `${closedCount} closed or verified`,
           )}
         </tr>
       </table>
@@ -213,8 +274,8 @@ export function formatReportBody(draft: Draft): string {
         ${summaryBlock}
         ${sectionHeading('Current tasks')}
         ${bulletRows(draft.tasks, 'No tasks listed for today.', draft.jiraBaseUrl, true)}
-        ${sectionHeading('Blockers')}
-        ${bulletRows(draft.blockers, 'None reported.', draft.jiraBaseUrl, true)}
+        ${sectionHeading('Blockers', BLOCKER_COLOR, SOFT_RED, '#FCA5A5')}
+        ${bulletRows(draft.blockers, 'None reported.', draft.jiraBaseUrl, true, BLOCKER_COLOR)}
         ${sectionHeading('Highlights')}
         ${bulletRows(draft.highlights, 'No highlights listed.')}
         ${sectionHeading('Defects')}
@@ -224,7 +285,7 @@ export function formatReportBody(draft: Draft): string {
   </tr>
   <tr>
     <td bgcolor="#F3F2F1" style="background-color:#F3F2F1;padding:10px 14px;border-top:1px solid ${BORDER};">
-      <p style="margin:0;font-family:${FONT};font-size:9pt;color:#605E5C;text-align:center;">Aurora Mobile</p>
+      <p style="margin:0;font-family:${FONT};font-size:10pt;color:#605E5C;text-align:center;">Aurora Mobile</p>
     </td>
   </tr>
 </table>`
@@ -248,7 +309,7 @@ export function formatReportHtml(draft: Draft): string {
 </noscript>
 <![endif]-->
 </head>
-<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${FONT};font-size:11pt;color:${BODY_COLOR};">
+<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${FONT};font-size:12pt;color:${BODY_COLOR};">
 ${body}
 </body>
 </html>`

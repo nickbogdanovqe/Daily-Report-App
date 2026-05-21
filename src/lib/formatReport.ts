@@ -95,11 +95,18 @@ export function formatReport(draft: Draft): string {
     lines.push('None reported')
   } else {
     for (const d of defects) {
+      const jiraId = (d.jiraId ?? '').trim().toUpperCase()
+      const jiraUrl = formatJiraUrl(draft.jiraBaseUrl, jiraId)
+      const jiraText = jiraId
+        ? jiraUrl
+          ? `[${jiraId}] ${jiraUrl} — `
+          : `[${jiraId}] `
+        : ''
       const note = d.note.trim()
       const link = formatDefectLink(d.link)
       const linkText = link ? ` — ${link}` : ''
       const noteText = note ? ` — ${note}` : ''
-      lines.push(`[${d.status}] ${d.title.trim()}${linkText}${noteText}`)
+      lines.push(`[${d.status}] ${jiraText}${d.title.trim()}${linkText}${noteText}`)
     }
   }
 

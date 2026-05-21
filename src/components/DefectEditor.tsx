@@ -108,7 +108,17 @@ function SortableDefectCard({
             ))}
           </select>
         </label>
-        <label className="col-span-2 block sm:col-span-2">
+        <label className="block">
+          <span className="mb-1 block text-xs font-medium text-slate-500">JIRA ID</span>
+          <input
+            type="text"
+            value={defect.jiraId ?? ''}
+            onChange={(e) => onUpdate({ jiraId: e.target.value.toUpperCase() })}
+            placeholder="ABC-123"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-2 py-2 text-sm font-semibold uppercase text-slate-800 shadow-inner shadow-slate-900/5 placeholder:font-medium placeholder:normal-case placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          />
+        </label>
+        <label className="col-span-2 block sm:col-span-1">
           <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
           <input
             type="url"
@@ -155,6 +165,7 @@ export function DefectEditor({ defects, onChange }: DefectEditorProps) {
         id: createId(),
         title: '',
         status: 'Open',
+        jiraId: '',
         link: '',
         note: '',
       },

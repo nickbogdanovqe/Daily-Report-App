@@ -18,6 +18,7 @@ export interface Defect {
   id: string
   title: string
   status: DefectStatus
+  jiraId?: string
   link: string
   note: string
 }

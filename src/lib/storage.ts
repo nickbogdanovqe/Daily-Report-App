@@ -42,6 +42,7 @@ function normalizeDefects(defects: StoredDefect[] | undefined): Defect[] {
     id: defect.id ?? createId(),
     title: defect.title ?? '',
     status: defect.status ?? 'Open',
+    jiraId: defect.jiraId ?? '',
     link: defect.link ?? '',
     note: defect.note ?? '',
   }))
