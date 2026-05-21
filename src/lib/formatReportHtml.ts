@@ -15,9 +15,9 @@ const HEADING_COLOR = '#0050B5'
 const HEADER_BG = '#0050B5'
 const BORDER = '#B4B4B4'
 const ALT_ROW = '#F3F2F1'
-const SOFT_BLUE = '#EAF2FF'
+const SOFT_BLUE = '#D6E8FF'
 const BLOCKER_COLOR = '#B91C1C'
-const SOFT_RED = '#FEF2F2'
+const SOFT_RED = '#FEE2E2'
 
 function formatDateLong(isoDate: string): string {
   const date = new Date(`${isoDate}T12:00:00`)
@@ -51,9 +51,9 @@ function jiraHref(jiraBaseUrl: string, jiraId: string): string {
 function jiraBadge(
   jiraId: string,
   jiraBaseUrl: string,
-  color = HEADING_COLOR,
+  color = '#1E40AF',
   background = SOFT_BLUE,
-  border = '#BBD4F5',
+  border = '#93C5FD',
 ): string {
   const id = jiraId.trim().toUpperCase()
   if (!id) return ''
@@ -194,10 +194,10 @@ export function formatReportBody(draft: Draft): string {
     <tr>
       <td style="padding:4px 0 8px 0;">
         <table width="100%" cellpadding="0" cellspacing="0" border="1" role="presentation" style="border-collapse:collapse;border-color:${BORDER};font-family:${FONT};">
-          <tr style="background-color:#E8EEF4;">
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Status</th>
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Defect</th>
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};border:1px solid ${BORDER};">Notes</th>
+          <tr style="background-color:#C7DBF5;">
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Status</th>
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Defect</th>
+            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Notes</th>
           </tr>
           ${defects
             .map((d, i) => {
@@ -207,7 +207,7 @@ export function formatReportBody(draft: Draft): string {
               const defectJiraBadge = jiraBadge(d.jiraId ?? '', draft.jiraBaseUrl)
               const defectTitle = escapeHtml(d.title.trim())
               const defectCell = link
-                ? `<a href="${escapeHtml(link)}" style="color:${HEADING_COLOR};font-weight:bold;text-decoration:underline;">${defectTitle}</a>`
+                ? `<a href="${escapeHtml(link)}" style="color:#1E40AF;font-weight:bold;text-decoration:underline;">${defectTitle}</a>`
                 : defectTitle
               return `
           <tr style="background-color:${rowBg};">
@@ -256,7 +256,7 @@ export function formatReportBody(draft: Draft): string {
           ${kpiCell(
             'Overall status',
             labelCell(overallLabel, overall.bg, overall.text),
-            'Current QA posture',
+            'Current QA Status',
             overall.text,
           )}
           ${kpiCell(
