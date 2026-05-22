@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 type SectionVariant = 'scope' | 'highlights' | 'defects'
 
@@ -49,6 +49,34 @@ interface SectionProps {
   variant: SectionVariant
   children: ReactNode
   defaultOpen?: boolean
+  storageKey: string
+}
+
+const SECTION_STATE_STORAGE_PREFIX = 'aurora-daily-report-section-open-v1'
+
+function loadSectionOpenState(storageKey: string, defaultOpen: boolean): boolean {
+  try {
+    const stored = window.localStorage.getItem(
+      `${SECTION_STATE_STORAGE_PREFIX}:${storageKey}`,
+    )
+    if (stored === 'open') return true
+    if (stored === 'closed') return false
+  } catch {
+    // Ignore unavailable storage and fall back to the default state.
+  }
+
+  return defaultOpen
+}
+
+function saveSectionOpenState(storageKey: string, open: boolean): void {
+  try {
+    window.localStorage.setItem(
+      `${SECTION_STATE_STORAGE_PREFIX}:${storageKey}`,
+      open ? 'open' : 'closed',
+    )
+  } catch {
+    // Ignore unavailable storage; the section still works for this session.
+  }
 }
 
 function SectionIcon({ variant }: { variant: SectionVariant }) {
@@ -81,9 +109,16 @@ export function Section({
   variant,
   children,
   defaultOpen = true,
+  storageKey,
 }: SectionProps) {
-  const [open, setOpen] = useState(defaultOpen)
+  const [open, setOpen] = useState(() =>
+    loadSectionOpenState(storageKey, defaultOpen),
+  )
   const style = VARIANT_STYLES[variant]
+
+  useEffect(() => {
+    saveSectionOpenState(storageKey, open)
+  }, [open, storageKey])
 
   return (
     <section
@@ -92,6 +127,7 @@ export function Section({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
         className={`flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition ${style.hoverBg}`}
       >
         <span className="flex items-center gap-3">

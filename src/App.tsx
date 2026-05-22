@@ -74,7 +74,12 @@ function App() {
           )}
           <ReportMeta draft={draft} onChange={updateDraft} />
 
-          <Section title="Highlights" count={draft.highlights.length} variant="highlights">
+          <Section
+            title="Highlights"
+            count={draft.highlights.length}
+            variant="highlights"
+            storageKey="highlights"
+          >
             <EditableList
               items={draft.highlights}
               onChange={(highlights) => updateDraft({ highlights })}
@@ -83,7 +88,12 @@ function App() {
             />
           </Section>
 
-          <Section title="In scope items" count={draft.inScopeItems.length} variant="highlights">
+          <Section
+            title="In scope items"
+            count={draft.inScopeItems.length}
+            variant="highlights"
+            storageKey="in-scope-items"
+          >
             <EditableList
               items={draft.inScopeItems}
               onChange={(inScopeItems) => updateDraft({ inScopeItems })}
@@ -92,7 +102,12 @@ function App() {
             />
           </Section>
 
-          <Section title="Out of scope" count={draft.outOfScopeItems.length} variant="scope">
+          <Section
+            title="Out of scope"
+            count={draft.outOfScopeItems.length}
+            variant="scope"
+            storageKey="out-of-scope"
+          >
             <EditableList
               items={draft.outOfScopeItems}
               onChange={(outOfScopeItems) => updateDraft({ outOfScopeItems })}
@@ -105,11 +120,17 @@ function App() {
             title="Optional test summary tables"
             count={enabledSummaryTableCount}
             variant="defects"
+            storageKey="optional-test-summary-tables"
           >
             <TestSummaryTables draft={draft} onChange={updateDraft} />
           </Section>
 
-          <Section title="Defects" count={draft.defects.length} variant="defects">
+          <Section
+            title="Defects"
+            count={draft.defects.length}
+            variant="defects"
+            storageKey="defects"
+          >
             <DefectEditor
               defects={draft.defects}
               onChange={(defects) => updateDraft({ defects })}
