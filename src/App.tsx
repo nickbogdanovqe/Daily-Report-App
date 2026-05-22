@@ -21,8 +21,6 @@ function App() {
   } = useDraft()
 
   const defectCount = draft.defects.filter((d) => d.title.trim()).length
-  const blockerCount = draft.blockers.filter((b) => b.text.trim()).length
-  const taskCount = draft.tasks.filter((t) => t.text.trim()).length
   const highlightCount = draft.highlights.filter((h) => h.text.trim()).length
   const enabledSummaryTableCount =
     Number(draft.showTestDesignSummary) + Number(draft.showTestExecutionSummary)
@@ -51,19 +49,7 @@ function App() {
               Outlook-style preview, and one-click formatted copy.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[560px]">
-            <div className="min-h-[92px] rounded-[1.35rem] border border-white/10 bg-white/[0.12] px-4 py-3.5 shadow-lg shadow-blue-950/10 backdrop-blur">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200/80">
-                Tasks
-              </p>
-              <p className="mt-2 text-3xl font-bold leading-none text-white">{taskCount}</p>
-            </div>
-            <div className="min-h-[92px] rounded-[1.35rem] border border-white/10 bg-white/[0.12] px-4 py-3.5 shadow-lg shadow-blue-950/10 backdrop-blur">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200/80">
-                Blockers
-              </p>
-              <p className="mt-2 text-3xl font-bold leading-none text-white">{blockerCount}</p>
-            </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:min-w-[360px]">
             <div className="min-h-[92px] rounded-[1.35rem] border border-white/10 bg-white/[0.12] px-4 py-3.5 shadow-lg shadow-blue-950/10 backdrop-blur">
               <p className="text-[10px] font-bold uppercase tracking-widest text-blue-200/80">
                 Highlights
@@ -93,26 +79,6 @@ function App() {
             <PreviousReportPanel previousReport={previousReport} />
           )}
 
-          <Section title="Current tasks" count={draft.tasks.length} variant="tasks">
-            <EditableList
-              items={draft.tasks}
-              onChange={(tasks) => updateDraft({ tasks })}
-              placeholder="e.g. Regression on build 1.2.3 (iOS + Android)"
-              addLabel="Add task"
-              showJiraId
-            />
-          </Section>
-
-          <Section title="Blockers" count={draft.blockers.length} variant="blockers">
-            <EditableList
-              items={draft.blockers}
-              onChange={(blockers) => updateDraft({ blockers })}
-              placeholder="e.g. Waiting for test account provisioning"
-              addLabel="Add blocker"
-              showJiraId
-            />
-          </Section>
-
           <Section title="Highlights" count={draft.highlights.length} variant="highlights">
             <EditableList
               items={draft.highlights}
@@ -131,7 +97,7 @@ function App() {
             />
           </Section>
 
-          <Section title="Out of scope" count={draft.outOfScopeItems.length} variant="blockers">
+          <Section title="Out of scope" count={draft.outOfScopeItems.length} variant="scope">
             <EditableList
               items={draft.outOfScopeItems}
               onChange={(outOfScopeItems) => updateDraft({ outOfScopeItems })}

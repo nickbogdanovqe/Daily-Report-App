@@ -15,7 +15,7 @@ export function DayRolloverBanner({ rolledFromDate, onDismiss }: DayRolloverBann
         <p className="text-sm font-semibold text-blue-900">Loaded from your last report</p>
         <p className="mt-0.5 text-sm text-blue-800/90">
           Content from <strong>{formatDateShort(rolledFromDate)}</strong> is ready to edit for
-          today. Update tasks, blockers, and defects, then copy when done.
+          today. Update highlights and defects, then copy when done.
         </p>
       </div>
       <button

@@ -181,10 +181,7 @@ export function formatReport(draft: Draft): string {
   ]
 
   const highlightText = formatBulletList(draft.highlights, '', draft.jiraBaseUrl)
-  const taskText = formatBulletList(draft.tasks, '', draft.jiraBaseUrl)
-  const blockerText = formatBulletList(draft.blockers, '', draft.jiraBaseUrl, 'Blocked: ')
-  const highlights = [highlightText, taskText, blockerText].filter(Boolean)
-  lines.push(highlights.length ? highlights.join('\n') : 'No key highlights listed.')
+  lines.push(highlightText || 'No key highlights listed.')
 
   lines.push(
     '',

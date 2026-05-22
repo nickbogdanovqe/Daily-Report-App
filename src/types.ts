@@ -78,8 +78,6 @@ export interface Draft {
   testExecutionSummaryRows: TestExecutionSummaryRow[]
   jiraBaseUrl: string
   summary: string
-  tasks: ListItem[]
-  blockers: ListItem[]
   highlights: ListItem[]
   defects: Defect[]
 }

@@ -2,16 +2,21 @@ import type { Defect, Draft, ListItem, OverallStatus } from '../types'
 import { escapeHtml, resolveOverallStatus, statusColors } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
-const FONT = 'Segoe UI, Aptos, Calibri, sans-serif'
+const FONT = 'Aptos, Calibri, sans-serif'
+const HEADER_FONT = 'Aptos, Calibri, sans-serif'
+const BODY_FONT = 'Aptos, Calibri, sans-serif'
+const HEADER_FONT_SIZE = '12pt'
+const BODY_FONT_SIZE = '11pt'
+const SMALL_FONT_SIZE = '10pt'
 const WIDTH = 1180
 const BLUE = '#2F5B93'
 const GRID = '#2B6EEB'
 const LABEL_BG = '#D9E2F3'
 const PANEL_BG = '#E8EEF8'
 const BODY_COLOR = '#242424'
-const SCOPE_FONT = 'Arial, Calibri, sans-serif'
-const SCOPE_FONT_SIZE = '16pt'
-const SCOPE_HEADING_FONT_SIZE = '16pt'
+const SCOPE_FONT = BODY_FONT
+const SCOPE_FONT_SIZE = BODY_FONT_SIZE
+const SCOPE_HEADING_FONT_SIZE = HEADER_FONT_SIZE
 const SCOPE_LINE_HEIGHT = '1.18'
 const RAG_GREEN = '#70AD47'
 const RAG_AMBER = '#D57132'
@@ -67,7 +72,7 @@ function paragraphText(text: string): string {
   return lines
     .map(
       (line) =>
-        `<p style="margin:0 0 8px 0;font-family:${FONT};font-size:13pt;line-height:1.32;color:${BODY_COLOR};">${escapeHtml(line)}</p>`,
+        `<p style="margin:0 0 8px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.32;color:${BODY_COLOR};">${escapeHtml(line)}</p>`,
     )
     .join('')
 }
@@ -88,15 +93,15 @@ function statusFill(draft: Draft): string {
 }
 
 function labelCell(text: string, extra = '', bold = false): string {
-  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:${bold ? '700' : '400'};color:#111111;text-align:right;vertical-align:middle;${extra}">${escapeHtml(text)}`
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:7px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.15;font-weight:${bold ? '700' : '400'};color:#111111;text-align:right;vertical-align:middle;${extra}">${escapeHtml(text)}`
 }
 
 function valueCell(text: string, extra = ''): string {
-  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:13pt;line-height:1.25;color:${BODY_COLOR};vertical-align:middle;${extra}">${escapeHtml(text) || '&nbsp;'}`
+  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:7px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.25;color:${BODY_COLOR};vertical-align:middle;${extra}">${escapeHtml(text) || '&nbsp;'}`
 }
 
 function sectionBar(title: string, align: 'left' | 'center' = 'left'): string {
-  return `style="background-color:${BLUE};border:1px solid ${GRID};padding:3px 8px;font-family:${FONT};font-size:14pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:${align};vertical-align:middle;">${escapeHtml(title)}`
+  return `style="background-color:${BLUE};border:1px solid ${GRID};padding:3px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:${align};vertical-align:middle;">${escapeHtml(title)}`
 }
 
 function jiraBadge(item: ListItem, jiraBaseUrl: string): string {
@@ -109,30 +114,28 @@ function jiraBadge(item: ListItem, jiraBaseUrl: string): string {
     return `${label} - `
   }
 
-  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a> - `
+  return `<a href="${escapeHtml(href)}" style="font-family:${BODY_FONT};font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a> - `
 }
 
 function bulletList(draft: Draft): string {
-  const rows = [
-    ...draft.highlights.map((item) => ({ item, prefix: '' })),
-    ...draft.tasks.map((item) => ({ item, prefix: '' })),
-    ...draft.blockers.map((item) => ({ item, prefix: 'Blocked: ' })),
-  ].filter(({ item }) => item.text.trim())
+  const rows = draft.highlights
+    .map((item) => ({ item, prefix: '' }))
+    .filter(({ item }) => item.text.trim())
 
   if (rows.length === 0) {
     const summary = draft.summary.trim()
     if (summary) return paragraphText(summary)
-    return `<p style="margin:0;font-family:${FONT};font-size:13pt;line-height:1.35;color:${BODY_COLOR};font-style:italic;">No key highlights listed.</p>`
+    return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};font-style:italic;">No key highlights listed.</p>`
   }
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0;border-collapse:collapse;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0;border-collapse:collapse;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;">
       ${rows
         .map(
           ({ item, prefix }) =>
             `<tr>
-              <td width="18" valign="top" style="width:18px;padding:0 6px 8px 0;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;text-align:center;">&#8226;</td>
-              <td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;">${jiraBadge(item, draft.jiraBaseUrl)}${escapeHtml(prefix)}${escapeHtml(item.text.trim())}</td>
+              <td width="18" valign="top" style="width:18px;padding:0 6px 8px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;text-align:center;">&#8226;</td>
+              <td valign="top" style="padding:0 0 8px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;">${jiraBadge(item, draft.jiraBaseUrl)}${escapeHtml(prefix)}${escapeHtml(item.text.trim())}</td>
             </tr>`,
         )
         .join('')}
@@ -143,7 +146,7 @@ function defectsSummary(draft: Draft): string {
   const defects = draft.defects.filter((d) => d.title.trim())
   if (draft.testResultsDistribution.trim()) return paragraphText(draft.testResultsDistribution)
   if (defects.length === 0) {
-    return `<p style="margin:0;font-family:${FONT};font-size:13pt;line-height:1.35;font-weight:400;color:#111111;text-align:center;">Will update after test execution starts</p>`
+    return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;font-weight:400;color:#111111;text-align:center;">Will update after test execution starts</p>`
   }
 
   const openCount = defects.filter(
@@ -151,10 +154,10 @@ function defectsSummary(draft: Draft): string {
   ).length
 
   return `
-    <p style="margin:0 0 10px 0;font-family:${FONT};font-size:13pt;line-height:1.25;font-weight:400;color:#111111;text-align:center;">
+    <p style="margin:0 0 10px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.25;font-weight:400;color:#111111;text-align:center;">
       ${defects.length} total defects / ${openCount} open
     </p>
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;font-family:${FONT};">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;font-family:${BODY_FONT};">
       ${defects
         .map((defect) => {
           const status = statusColors(defect.status)
@@ -167,8 +170,8 @@ function defectsSummary(draft: Draft): string {
             : ''
           return `
       <tr>
-        <td style="padding:3px 0;font-family:${FONT};font-size:11pt;line-height:1.25;color:${BODY_COLOR};">
-          <span style="font-family:${FONT};font-size:10pt;font-weight:400;background-color:${status.bg};color:${status.text};padding:2px 5px;">${escapeHtml(defect.status)}</span>
+        <td style="padding:3px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.25;color:${BODY_COLOR};">
+          <span style="font-family:${BODY_FONT};font-size:${SMALL_FONT_SIZE};font-weight:400;background-color:${status.bg};color:${status.text};padding:2px 5px;">${escapeHtml(defect.status)}</span>
           ${jira}${escapeHtml(defect.title.trim())}
         </td>
       </tr>`
@@ -184,7 +187,7 @@ function linkedValue(value: string): string {
   const href = normalizeLink(trimmed)
   if (!href) return escapeHtml(trimmed)
 
-  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-size:13pt;font-weight:400;color:#8A2BFF;text-decoration:underline;">${escapeHtml(trimmed)}</a>`
+  return `<a href="${escapeHtml(href)}" style="font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};font-weight:400;color:#8A2BFF;text-decoration:underline;">${escapeHtml(trimmed)}</a>`
 }
 
 function defectJiraLink(defect: Defect, jiraBaseUrl: string): string {
@@ -195,7 +198,7 @@ function defectJiraLink(defect: Defect, jiraBaseUrl: string): string {
   const label = escapeHtml(jiraId)
   if (!href) return label
 
-  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-size:13pt;font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a>`
+  return `<a href="${escapeHtml(href)}" style="font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a>`
 }
 
 function titleText(draft: Draft): string {
@@ -259,7 +262,7 @@ function summaryLabel(title: string): string {
   return `
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;font-family:${FONT};clear:both;">
   <tr>
-    <td style="padding:22px 0 3px 8px;font-family:${FONT};font-size:15pt;line-height:1.15;font-weight:700;color:#000000;text-decoration:underline;">
+    <td style="padding:22px 0 3px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.15;font-weight:700;color:#000000;text-decoration:underline;">
       ${escapeHtml(title)}
     </td>
   </tr>
@@ -267,19 +270,19 @@ function summaryLabel(title: string): string {
 }
 
 function reportHeaderCell(label: string, extra = ''): string {
-  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.2;font-weight:700;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(label)}`
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.2;font-weight:700;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(label)}`
 }
 
 function reportValueCell(value: string, extra = ''): string {
-  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
+  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
 }
 
 function totalValueCell(value: string, extra = ''): string {
-  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:4px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
 }
 
 function remarksCell(text: string, rowspan: number): string {
-  return `<td rowspan="${rowspan}" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:12px 14px;font-family:${FONT};font-size:13pt;line-height:1.28;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${paragraphText(text)}</td>`
+  return `<td rowspan="${rowspan}" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:12px 14px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.28;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${paragraphText(text)}</td>`
 }
 
 function testDesignSummaryBlock(draft: Draft): string {
@@ -306,7 +309,7 @@ ${summaryLabel('Test Design Summary:')}
     <col style="width:400px;" />
   </colgroup>
   <tr>
-    <td colspan="7" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td colspan="7" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
       ${escapeHtml(title)}
     </td>
   </tr>
@@ -377,7 +380,7 @@ ${summaryLabel('Test Execution Summary:')}
     <col style="width:280px;" />
   </colgroup>
   <tr>
-    <td colspan="10" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td colspan="10" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
       ${escapeHtml(title)}
     </td>
   </tr>
@@ -455,7 +458,7 @@ ${summaryLabel('Defects Summary:')}
     <col style="width:370px;" />
   </colgroup>
   <tr>
-    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
       Defects Summary
     </td>
   </tr>
@@ -470,7 +473,7 @@ ${summaryLabel('Defects Summary:')}
       (defect) => `
   <tr>
     <td ${reportValueCell(defect.status)}</td>
-    <td style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${defectJiraLink(defect, draft.jiraBaseUrl)}</td>
+    <td style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${defectJiraLink(defect, draft.jiraBaseUrl)}</td>
     <td ${reportValueCell(defect.title.trim(), 'text-align:left;')}</td>
     <td ${reportValueCell(defect.note.trim(), 'text-align:left;')}</td>
   </tr>`,
@@ -494,15 +497,15 @@ export function formatReportBody(draft: Draft): string {
     <col style="width:320px;" />
   </colgroup>
   <tr>
-    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
       ${escapeHtml(titleText(draft))}
     </td>
   </tr>
   <tr>
     <td ${labelCell('Application/ Microservice Name')}</td>
-    <td ${valueCell(draft.applicationName, 'font-size:12.5pt;')}</td>
-    <td ${labelCell("Today's RAG", 'font-size:14pt;', true)}</td>
-    <td style="background-color:${ragFill};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:14pt;line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td ${valueCell(draft.applicationName)}</td>
+    <td ${labelCell("Today's RAG", '', true)}</td>
+    <td style="background-color:${ragFill};border:1px solid ${GRID};padding:7px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
       &nbsp;
     </td>
   </tr>
@@ -510,7 +513,7 @@ export function formatReportBody(draft: Draft): string {
     <td ${labelCell('Project QA Start Dt')}</td>
     <td ${valueCell(formatDateShort(draft.projectQaStartDate))}</td>
     <td rowspan="2" ${labelCell('Reason(If other than Green)', 'height:96px;', true)}</td>
-    <td rowspan="2" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${FONT};font-size:13pt;line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
+    <td rowspan="2" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
       ${paragraphText(ragReason)}
     </td>
   </tr>
@@ -521,8 +524,8 @@ export function formatReportBody(draft: Draft): string {
   <tr>
     <td ${labelCell('Planned Go-Live Dt')}</td>
     <td ${valueCell(formatDateShort(draft.plannedGoLiveDate))}</td>
-    <td ${labelCell('Anticipated Trend', 'font-size:14pt;', true)}</td>
-    <td style="background-color:${anticipatedFill};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:14pt;line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
+    <td ${labelCell('Anticipated Trend', '', true)}</td>
+    <td style="background-color:${anticipatedFill};border:1px solid ${GRID};padding:7px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
       &nbsp;
     </td>
   </tr>
@@ -530,7 +533,7 @@ export function formatReportBody(draft: Draft): string {
     <td ${labelCell('Testing Type')}</td>
     <td ${valueCell(draft.testingType)}</td>
     <td rowspan="3" ${labelCell('Reason(If other than Green)', 'height:106px;', true)}</td>
-    <td rowspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${FONT};font-size:13pt;line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
+    <td rowspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
       ${paragraphText(trendReason)}
     </td>
   </tr>
@@ -547,24 +550,24 @@ export function formatReportBody(draft: Draft): string {
     <td colspan="2" ${sectionBar('Test Results Distribution', 'center')}</td>
   </tr>
   <tr>
-    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:22px 18px 22px 18px;font-family:${FONT};font-size:13pt;line-height:1.35;color:#000000;vertical-align:top;height:236px;">
+    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:22px 18px 22px 18px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;vertical-align:top;height:236px;">
       ${bulletList(draft)}
     </td>
-    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:24px;font-family:${FONT};font-size:13pt;line-height:1.35;color:#000000;text-align:center;vertical-align:middle;height:236px;">
+    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:24px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;text-align:center;vertical-align:middle;height:236px;">
       ${defectsSummary(draft)}
     </td>
   </tr>
   <tr>
-    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Evidence/ XRAY Path</td>
-    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testEvidencePath)}</td>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Evidence/ XRAY Path</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testEvidencePath)}</td>
   </tr>
   <tr>
-    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Artifacts (Confluence)</td>
-    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testArtifacts)}</td>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Artifacts (Confluence)</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testArtifacts)}</td>
   </tr>
   <tr>
-    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Environment Downtime Tracker</td>
-    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.environmentDowntime)}</td>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Environment Downtime Tracker</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.environmentDowntime)}</td>
   </tr>
 </table>
 ${scopeBlock(draft)}
@@ -590,7 +593,7 @@ export function formatReportHtml(draft: Draft): string {
 </noscript>
 <![endif]-->
 </head>
-<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${FONT};font-size:13pt;color:${BODY_COLOR};">
+<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};color:${BODY_COLOR};">
 ${body}
 </body>
 </html>`

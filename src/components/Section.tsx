@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 
-type SectionVariant = 'tasks' | 'blockers' | 'highlights' | 'defects'
+type SectionVariant = 'scope' | 'highlights' | 'defects'
 
 const VARIANT_STYLES: Record<
   SectionVariant,
@@ -14,20 +14,11 @@ const VARIANT_STYLES: Record<
     divider: string
   }
 > = {
-  tasks: {
-    accent: 'border-l-blue-500',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-    label: 'Tasks',
-    cardBg: 'bg-white/95',
-    hoverBg: 'hover:bg-slate-50/80',
-    divider: 'border-slate-100',
-  },
-  blockers: {
+  scope: {
     accent: 'border-l-red-600',
     iconBg: 'bg-red-100',
     iconColor: 'text-red-600',
-    label: 'Blockers',
+    label: 'Scope',
     cardBg: 'bg-red-50/80',
     hoverBg: 'hover:bg-red-50',
     divider: 'border-red-100',
@@ -63,13 +54,7 @@ interface SectionProps {
 function SectionIcon({ variant }: { variant: SectionVariant }) {
   const cls = `h-4 w-4 ${VARIANT_STYLES[variant].iconColor}`
   switch (variant) {
-    case 'tasks':
-      return (
-        <svg className={cls} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-        </svg>
-      )
-    case 'blockers':
+    case 'scope':
       return (
         <svg className={cls} viewBox="0 0 20 20" fill="currentColor" aria-hidden>
           <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />

@@ -168,8 +168,6 @@ export function createEmptyDraft(): Draft {
     testExecutionSummaryRows: createDefaultExecutionRows(),
     jiraBaseUrl: '',
     summary: '',
-    tasks: [],
-    blockers: [],
     highlights: [],
     defects: [],
   }
@@ -248,13 +246,17 @@ function normalizeExecutionRows(
 }
 
 function normalizeDraft(parsed: StoredDraft): Draft {
+  const { blockers: _legacyBlockers, tasks: _legacyTasks, ...storedDraft } =
+    parsed as StoredDraft & {
+      blockers?: unknown
+      tasks?: unknown
+    }
+
   return {
     ...createEmptyDraft(),
-    ...parsed,
+    ...storedDraft,
     overallStatus: normalizeRagStatus(parsed.overallStatus),
     anticipatedTrend: normalizeRagStatus(parsed.anticipatedTrend ?? parsed.overallStatus),
-    tasks: normalizeListItems(parsed.tasks as StoredListItem[] | undefined),
-    blockers: normalizeListItems(parsed.blockers as StoredListItem[] | undefined),
     highlights: normalizeListItems(parsed.highlights as StoredListItem[] | undefined),
     inScopeItems: normalizeListItems(parsed.inScopeItems as StoredListItem[] | undefined),
     outOfScopeItems: normalizeListItems(
@@ -335,8 +337,6 @@ export function initializeSessionDraft(): SessionInit {
   if (isNewDay || isFirstVisitWithStaleDraft) {
     const hasContent =
       draft.summary.trim() ||
-      draft.tasks.some((t) => t.text.trim()) ||
-      draft.blockers.some((b) => b.text.trim()) ||
       draft.highlights.some((h) => h.text.trim()) ||
       draft.inScopeItems.some((i) => i.text.trim()) ||
       draft.outOfScopeItems.some((i) => i.text.trim()) ||

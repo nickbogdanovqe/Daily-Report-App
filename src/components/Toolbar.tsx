@@ -24,7 +24,7 @@ export function Toolbar({ draft, lastSaved, onReset }: ToolbarProps) {
   const handleReset = () => {
     if (
       window.confirm(
-        'Reset the entire draft? This clears all tasks, blockers, highlights, and defects.',
+        'Reset the entire draft? This clears highlights and defects.',
       )
     ) {
       onReset()
