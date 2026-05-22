@@ -9,8 +9,7 @@ export function escapeHtml(text: string): string {
 }
 
 export function formatOverallLabel(draft: Draft): string {
-  const custom = draft.overallStatusCustom.trim()
-  return custom || draft.overallStatus
+  return draft.overallStatus
 }
 
 export function overallStatusColors(status: OverallStatus): {
@@ -19,11 +18,11 @@ export function overallStatusColors(status: OverallStatus): {
   border: string
 } {
   switch (status) {
-    case 'On track':
+    case 'Green':
       return { bg: '#ecfdf5', text: '#047857', border: '#6ee7b7' }
-    case 'At risk':
+    case 'Amber':
       return { bg: '#fffbeb', text: '#b45309', border: '#fcd34d' }
-    case 'Blocked':
+    case 'Red':
       return { bg: '#fef2f2', text: '#b91c1c', border: '#fca5a5' }
   }
 }
@@ -49,9 +48,5 @@ export function statusColors(status: DefectStatus): {
 }
 
 export function resolveOverallStatus(draft: Draft): OverallStatus {
-  const custom = draft.overallStatusCustom.trim().toLowerCase()
-  if (custom.includes('block') || custom.includes('stop')) return 'Blocked'
-  if (custom.includes('risk') || custom.includes('delay')) return 'At risk'
-  if (custom) return draft.overallStatus
   return draft.overallStatus
 }

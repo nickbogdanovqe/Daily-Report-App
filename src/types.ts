@@ -1,4 +1,4 @@
-export type OverallStatus = 'On track' | 'At risk' | 'Blocked'
+export type OverallStatus = 'Red' | 'Amber' | 'Green'
 
 export type DefectStatus =
   | 'New'
@@ -23,10 +23,59 @@ export interface Defect {
   note: string
 }
 
+export interface TestDesignSummaryRow {
+  id: string
+  functionality: string
+  totalPlanned: string
+  totalCompleted: string
+  totalInProgress: string
+  totalNotStarted: string
+  totalCompletedToday: string
+}
+
+export interface TestExecutionSummaryRow {
+  id: string
+  functionality: string
+  totalPlanned: string
+  totalExecuted: string
+  totalPassed: string
+  totalFailed: string
+  totalNa: string
+  totalNotComplete: string
+  totalBlocked: string
+  totalNoRun: string
+}
+
 export interface Draft {
   reportDate: string
+  reportTitle: string
+  applicationName: string
+  projectQaStartDate: string
+  projectQaSignOffDate: string
+  plannedGoLiveDate: string
+  testingType: string
+  testEnvironment: string
+  qeOwner: string
   overallStatus: OverallStatus
   overallStatusCustom: string
+  anticipatedTrend: OverallStatus
+  ragReason: string
+  trendReason: string
+  testResultsDistribution: string
+  testEvidencePath: string
+  testArtifacts: string
+  environmentDowntime: string
+  inScopeConfirmedDate: string
+  inScopeItems: ListItem[]
+  outOfScopeItems: ListItem[]
+  showTestDesignSummary: boolean
+  testDesignSummaryTitle: string
+  testDesignSummaryRemarks: string
+  testDesignSummaryRows: TestDesignSummaryRow[]
+  showTestExecutionSummary: boolean
+  testExecutionSummaryTitle: string
+  testExecutionSummaryRemarks: string
+  testExecutionSummaryRows: TestExecutionSummaryRow[]
   jiraBaseUrl: string
   summary: string
   tasks: ListItem[]
@@ -36,9 +85,9 @@ export interface Draft {
 }
 
 export const OVERALL_STATUSES: OverallStatus[] = [
-  'On track',
-  'At risk',
-  'Blocked',
+  'Red',
+  'Amber',
+  'Green',
 ]
 
 export const DEFECT_STATUSES: DefectStatus[] = [

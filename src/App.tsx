@@ -5,6 +5,7 @@ import { PreviousReportPanel } from './components/PreviousReportPanel'
 import { ReportMeta } from './components/ReportMeta'
 import { ReportPreview } from './components/ReportPreview'
 import { Section } from './components/Section'
+import { TestSummaryTables } from './components/TestSummaryTables'
 import { Toolbar } from './components/Toolbar'
 import { useDraft } from './hooks/useDraft'
 
@@ -23,6 +24,8 @@ function App() {
   const blockerCount = draft.blockers.filter((b) => b.text.trim()).length
   const taskCount = draft.tasks.filter((t) => t.text.trim()).length
   const highlightCount = draft.highlights.filter((h) => h.text.trim()).length
+  const enabledSummaryTableCount =
+    Number(draft.showTestDesignSummary) + Number(draft.showTestExecutionSummary)
 
   return (
     <div className="flex min-h-svh flex-col bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.16),transparent_34rem),linear-gradient(135deg,#f8fafc_0%,#eef2ff_48%,#f8fafc_100%)]">
@@ -117,6 +120,32 @@ function App() {
               placeholder="e.g. Completed smoke on release candidate"
               addLabel="Add highlight"
             />
+          </Section>
+
+          <Section title="In scope items" count={draft.inScopeItems.length} variant="highlights">
+            <EditableList
+              items={draft.inScopeItems}
+              onChange={(inScopeItems) => updateDraft({ inScopeItems })}
+              placeholder="e.g. Debit Card Controls (Lock/ Unlock, Card Activation, PIN Set/ Change)"
+              addLabel="Add in-scope item"
+            />
+          </Section>
+
+          <Section title="Out of scope" count={draft.outOfScopeItems.length} variant="blockers">
+            <EditableList
+              items={draft.outOfScopeItems}
+              onChange={(outOfScopeItems) => updateDraft({ outOfScopeItems })}
+              placeholder="e.g. Account Servicing for SMB Products"
+              addLabel="Add out-of-scope item"
+            />
+          </Section>
+
+          <Section
+            title="Optional test summary tables"
+            count={enabledSummaryTableCount}
+            variant="defects"
+          >
+            <TestSummaryTables draft={draft} onChange={updateDraft} />
           </Section>
 
           <Section title="Defects" count={draft.defects.length} variant="defects">

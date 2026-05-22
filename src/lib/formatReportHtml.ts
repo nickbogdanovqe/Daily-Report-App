@@ -1,32 +1,40 @@
-import type { Draft, ListItem } from '../types'
-import {
-  escapeHtml,
-  formatOverallLabel,
-  overallStatusColors,
-  resolveOverallStatus,
-  statusColors,
-} from './reportTheme'
+import type { Defect, Draft, ListItem, OverallStatus } from '../types'
+import { escapeHtml, resolveOverallStatus, statusColors } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
 const FONT = 'Segoe UI, Aptos, Calibri, sans-serif'
-const WIDTH = 760
-const BODY_COLOR = '#323130'
-const HEADING_COLOR = '#0050B5'
-const HEADER_BG = '#0050B5'
-const BORDER = '#B4B4B4'
-const ALT_ROW = '#F3F2F1'
-const SOFT_BLUE = '#D6E8FF'
-const BLOCKER_COLOR = '#B91C1C'
-const SOFT_RED = '#FEE2E2'
+const WIDTH = 1180
+const BLUE = '#2F5B93'
+const GRID = '#2B6EEB'
+const LABEL_BG = '#D9E2F3'
+const PANEL_BG = '#E8EEF8'
+const BODY_COLOR = '#242424'
+const SCOPE_FONT = 'Arial, Calibri, sans-serif'
+const SCOPE_FONT_SIZE = '16pt'
+const SCOPE_HEADING_FONT_SIZE = '16pt'
+const SCOPE_LINE_HEIGHT = '1.18'
+const RAG_GREEN = '#70AD47'
+const RAG_AMBER = '#D57132'
+const RAG_RED = '#C00000'
 
-function formatDateLong(isoDate: string): string {
+function formatDateShort(isoDate: string): string {
+  if (!isoDate.trim()) return ''
   const date = new Date(`${isoDate}T12:00:00`)
   if (Number.isNaN(date.getTime())) return isoDate
   return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    year: '2-digit',
+  })
+}
+
+function formatDateMonthDay(isoDate: string): string {
+  if (!isoDate.trim()) return ''
+  const date = new Date(`${isoDate}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return isoDate
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
   })
 }
 
@@ -48,247 +56,520 @@ function jiraHref(jiraBaseUrl: string, jiraId: string): string {
     : `${cleanBase}/browse/${encodeURIComponent(id)}`
 }
 
-function jiraBadge(
-  jiraId: string,
-  jiraBaseUrl: string,
-  color = '#1E40AF',
-  background = SOFT_BLUE,
-  border = '#93C5FD',
-): string {
-  const id = jiraId.trim().toUpperCase()
-  if (!id) return ''
+function paragraphText(text: string): string {
+  const lines = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
 
-  const href = jiraHref(jiraBaseUrl, id)
-  const content = escapeHtml(id)
-  const style = `font-family:${FONT};font-size:10.5pt;font-weight:bold;color:${color};background-color:${background};border:1px solid ${border};padding:2px 7px;text-decoration:none;`
+  if (lines.length === 0) return '&nbsp;'
 
-  if (href) {
-    return `<a href="${escapeHtml(href)}" style="${style}">${content}</a>&nbsp;`
-  }
-
-  return `<span style="${style}">${content}</span>&nbsp;`
-}
-
-/** Outlook-friendly label cell (no border-radius, no inline-block) */
-function labelCell(text: string, bg: string, color: string): string {
-  return `<span style="font-family:${FONT};font-size:11pt;font-weight:bold;color:${color};background-color:${bg};padding:3px 9px;mso-padding-alt:3px 9px;">${escapeHtml(text)}</span>`
-}
-
-function sectionHeading(
-  title: string,
-  color = HEADING_COLOR,
-  background = SOFT_BLUE,
-  border = '#BBD4F5',
-): string {
-  return `
-    <tr>
-      <td style="padding:18px 0 8px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;background-color:${background};border:1px solid ${border};">
-          <tr>
-            <td width="6" bgcolor="${color}" style="width:6px;background-color:${color};font-size:1px;line-height:1px;">&nbsp;</td>
-            <td style="padding:8px 12px;font-family:${FONT};font-size:13pt;font-weight:bold;color:${color};">
-              ${escapeHtml(title)}
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>`
-}
-
-function bulletRows(
-  items: ListItem[],
-  emptyText: string,
-  jiraBaseUrl = '',
-  showJiraId = false,
-  bulletColor = HEADING_COLOR,
-): string {
-  const filled = items.filter((i) => i.text.trim())
-  if (filled.length === 0) {
-    return `
-    <tr>
-      <td style="padding:5px 0 9px 0;font-family:${FONT};font-size:12pt;color:#605E5C;font-style:italic;">
-        ${escapeHtml(emptyText)}
-      </td>
-    </tr>`
-  }
-  return filled
-    .map((item) => {
-      const jiraLabel = showJiraId
-        ? jiraBadge(
-            item.jiraId ?? '',
-            jiraBaseUrl,
-            bulletColor,
-            bulletColor === BLOCKER_COLOR ? SOFT_RED : SOFT_BLUE,
-            bulletColor === BLOCKER_COLOR ? '#FCA5A5' : '#BBD4F5',
-          )
-        : ''
-
-      return `
-    <tr>
-      <td style="padding:4px 0 4px 14px;font-family:${FONT};font-size:12pt;line-height:1.5;color:${BODY_COLOR};">
-        <span style="font-family:${FONT};color:${bulletColor};font-weight:bold;">&#8226;&nbsp;</span>${jiraLabel}${escapeHtml(item.text.trim())}
-      </td>
-    </tr>`
-    })
+  return lines
+    .map(
+      (line) =>
+        `<p style="margin:0 0 8px 0;font-family:${FONT};font-size:13pt;line-height:1.32;color:${BODY_COLOR};">${escapeHtml(line)}</p>`,
+    )
     .join('')
 }
 
-function kpiCell(
-  label: string,
-  valueHtml: string,
-  helperText: string,
-  accent = HEADING_COLOR,
-): string {
-  return `
-    <td width="33.33%" valign="top" style="padding:5px;">
-      <table width="100%" height="112" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid #BBD4F5;background-color:#FFFFFF;height:112px;">
-        <tr>
-          <td bgcolor="${accent}" style="height:5px;background-color:${accent};font-size:1px;line-height:1px;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td valign="top" style="padding:13px 14px 12px 14px;font-family:${FONT};height:86px;">
-            <p style="margin:0 0 7px 0;font-size:9pt;line-height:1.2;font-weight:bold;color:${HEADING_COLOR};text-transform:uppercase;letter-spacing:.6px;">${escapeHtml(label)}</p>
-            <div style="font-family:${FONT};font-size:13pt;line-height:1.25;font-weight:bold;color:#172B4D;">${valueHtml}</div>
-            <p style="margin:7px 0 0 0;font-family:${FONT};font-size:9.5pt;line-height:1.3;color:#605E5C;">${escapeHtml(helperText)}</p>
-          </td>
-        </tr>
-      </table>
-    </td>`
+function ragColor(status: OverallStatus): string {
+  switch (status) {
+    case 'Green':
+      return RAG_GREEN
+    case 'Amber':
+      return RAG_AMBER
+    case 'Red':
+      return RAG_RED
+  }
 }
 
-export function formatReportBody(draft: Draft): string {
-  const overallLabel = formatOverallLabel(draft)
-  const overallKey = resolveOverallStatus(draft)
-  const overall = overallStatusColors(overallKey)
+function statusFill(draft: Draft): string {
+  return ragColor(resolveOverallStatus(draft))
+}
 
+function labelCell(text: string, extra = '', bold = false): string {
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:${bold ? '700' : '400'};color:#111111;text-align:right;vertical-align:middle;${extra}">${escapeHtml(text)}`
+}
+
+function valueCell(text: string, extra = ''): string {
+  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:13pt;line-height:1.25;color:${BODY_COLOR};vertical-align:middle;${extra}">${escapeHtml(text) || '&nbsp;'}`
+}
+
+function sectionBar(title: string, align: 'left' | 'center' = 'left'): string {
+  return `style="background-color:${BLUE};border:1px solid ${GRID};padding:3px 8px;font-family:${FONT};font-size:14pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:${align};vertical-align:middle;">${escapeHtml(title)}`
+}
+
+function jiraBadge(item: ListItem, jiraBaseUrl: string): string {
+  const jiraId = (item.jiraId ?? '').trim().toUpperCase()
+  if (!jiraId) return ''
+
+  const href = jiraHref(jiraBaseUrl, jiraId)
+  const label = escapeHtml(jiraId)
+  if (!href) {
+    return `${label} - `
+  }
+
+  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a> - `
+}
+
+function bulletList(draft: Draft): string {
+  const rows = [
+    ...draft.highlights.map((item) => ({ item, prefix: '' })),
+    ...draft.tasks.map((item) => ({ item, prefix: '' })),
+    ...draft.blockers.map((item) => ({ item, prefix: 'Blocked: ' })),
+  ].filter(({ item }) => item.text.trim())
+
+  if (rows.length === 0) {
+    const summary = draft.summary.trim()
+    if (summary) return paragraphText(summary)
+    return `<p style="margin:0;font-family:${FONT};font-size:13pt;line-height:1.35;color:${BODY_COLOR};font-style:italic;">No key highlights listed.</p>`
+  }
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0;border-collapse:collapse;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;">
+      ${rows
+        .map(
+          ({ item, prefix }) =>
+            `<tr>
+              <td width="18" valign="top" style="width:18px;padding:0 6px 8px 0;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;text-align:center;">&#8226;</td>
+              <td valign="top" style="padding:0 0 8px 0;font-family:${FONT};font-size:13pt;line-height:1.34;color:#000000;">${jiraBadge(item, draft.jiraBaseUrl)}${escapeHtml(prefix)}${escapeHtml(item.text.trim())}</td>
+            </tr>`,
+        )
+        .join('')}
+    </table>`
+}
+
+function defectsSummary(draft: Draft): string {
   const defects = draft.defects.filter((d) => d.title.trim())
+  if (draft.testResultsDistribution.trim()) return paragraphText(draft.testResultsDistribution)
+  if (defects.length === 0) {
+    return `<p style="margin:0;font-family:${FONT};font-size:13pt;line-height:1.35;font-weight:400;color:#111111;text-align:center;">Will update after test execution starts</p>`
+  }
 
   const openCount = defects.filter(
     (d) => d.status === 'Open' || d.status === 'New' || d.status === 'In progress',
   ).length
-  const closedCount = Math.max(defects.length - openCount, 0)
-
-  const summaryBlock = draft.summary.trim()
-    ? `
-    <tr>
-      <td style="padding:0 0 4px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid ${BORDER};background-color:#F8F9FA;">
-          <tr>
-            <td style="padding:14px 16px;font-family:${FONT};">
-              <p style="margin:0 0 7px 0;font-size:11pt;font-weight:bold;color:${HEADING_COLOR};">Summary</p>
-              <p style="margin:0;font-size:12pt;line-height:1.55;color:${BODY_COLOR};">${escapeHtml(draft.summary.trim())}</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>`
-    : ''
-
-  const defectsBlock =
-    defects.length === 0
-      ? `
-    <tr>
-      <td style="padding:5px 0 9px 0;font-family:${FONT};font-size:12pt;color:#605E5C;font-style:italic;">None reported</td>
-    </tr>`
-      : `
-    <tr>
-      <td style="padding:4px 0 8px 0;">
-        <table width="100%" cellpadding="0" cellspacing="0" border="1" role="presentation" style="border-collapse:collapse;border-color:${BORDER};font-family:${FONT};">
-          <tr style="background-color:#C7DBF5;">
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Status</th>
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Defect</th>
-            <th align="left" style="padding:9px 12px;font-size:11pt;font-weight:bold;color:#1E3A5F;border:1px solid ${BORDER};">Notes</th>
-          </tr>
-          ${defects
-            .map((d, i) => {
-              const st = statusColors(d.status)
-              const rowBg = i % 2 === 1 ? ALT_ROW : '#FFFFFF'
-              const link = normalizeLink(d.link)
-              const defectJiraBadge = jiraBadge(d.jiraId ?? '', draft.jiraBaseUrl)
-              const defectTitle = escapeHtml(d.title.trim())
-              const defectCell = link
-                ? `<a href="${escapeHtml(link)}" style="color:#1E40AF;font-weight:bold;text-decoration:underline;">${defectTitle}</a>`
-                : defectTitle
-              return `
-          <tr style="background-color:${rowBg};">
-            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};white-space:nowrap;">${labelCell(d.status, st.bg, st.text)}</td>
-            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};font-size:12pt;font-weight:bold;color:${BODY_COLOR};">${defectJiraBadge}${defectCell}</td>
-            <td valign="top" style="padding:9px 12px;border:1px solid ${BORDER};font-size:11pt;color:#605E5C;">${d.note.trim() ? escapeHtml(d.note.trim()) : '—'}</td>
-          </tr>`
-            })
-            .join('')}
-        </table>
-      </td>
-    </tr>`
 
   return `
-<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;font-family:${FONT};">
+    <p style="margin:0 0 10px 0;font-family:${FONT};font-size:13pt;line-height:1.25;font-weight:400;color:#111111;text-align:center;">
+      ${defects.length} total defects / ${openCount} open
+    </p>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;font-family:${FONT};">
+      ${defects
+        .map((defect) => {
+          const status = statusColors(defect.status)
+          const jiraId = (defect.jiraId ?? '').trim().toUpperCase()
+          const jiraUrl = jiraHref(draft.jiraBaseUrl, jiraId)
+          const jira = jiraId
+            ? jiraUrl
+              ? `<a href="${escapeHtml(jiraUrl)}" style="color:#2B49C8;text-decoration:underline;font-weight:400;">${escapeHtml(jiraId)}</a> `
+              : `${escapeHtml(jiraId)} `
+            : ''
+          return `
+      <tr>
+        <td style="padding:3px 0;font-family:${FONT};font-size:11pt;line-height:1.25;color:${BODY_COLOR};">
+          <span style="font-family:${FONT};font-size:10pt;font-weight:400;background-color:${status.bg};color:${status.text};padding:2px 5px;">${escapeHtml(defect.status)}</span>
+          ${jira}${escapeHtml(defect.title.trim())}
+        </td>
+      </tr>`
+        })
+        .join('')}
+    </table>`
+}
+
+function linkedValue(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed) return '&nbsp;'
+
+  const href = normalizeLink(trimmed)
+  if (!href) return escapeHtml(trimmed)
+
+  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-size:13pt;font-weight:400;color:#8A2BFF;text-decoration:underline;">${escapeHtml(trimmed)}</a>`
+}
+
+function defectJiraLink(defect: Defect, jiraBaseUrl: string): string {
+  const jiraId = (defect.jiraId ?? '').trim().toUpperCase()
+  if (!jiraId) return '&nbsp;'
+
+  const href = jiraHref(jiraBaseUrl, jiraId) || normalizeLink(defect.link)
+  const label = escapeHtml(jiraId)
+  if (!href) return label
+
+  return `<a href="${escapeHtml(href)}" style="font-family:${FONT};font-size:13pt;font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a>`
+}
+
+function titleText(draft: Draft): string {
+  const title = draft.reportTitle.trim()
+  if (title) return title
+  const app = draft.applicationName.trim() || 'Daily QA'
+  const date = formatDateShort(draft.reportDate)
+  return date ? `QE Status Report - ${app} - ${date}` : `QE Status Report - ${app}`
+}
+
+function scopeList(items: ListItem[]): string {
+  const filled = items.filter((item) => item.text.trim())
+  if (filled.length === 0) return ''
+
+  return `
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:4px 0 30px 38px;border-collapse:collapse;font-family:${SCOPE_FONT};color:#000000;">
+      ${filled
+        .map(
+          (item) =>
+            `<tr>
+              <td width="22" valign="top" style="width:22px;padding:0 14px 3px 0;font-family:${SCOPE_FONT};font-size:${SCOPE_FONT_SIZE};line-height:${SCOPE_LINE_HEIGHT};color:#000000;text-align:center;">&#8226;</td>
+              <td valign="top" style="padding:0 0 3px 0;font-family:${SCOPE_FONT};font-size:${SCOPE_FONT_SIZE};line-height:${SCOPE_LINE_HEIGHT};font-weight:400;color:#000000;">${escapeHtml(item.text.trim())}</td>
+            </tr>`,
+        )
+        .join('')}
+    </table>`
+}
+
+function scopeBlock(draft: Draft): string {
+  const hasInScope = draft.inScopeItems.some((item) => item.text.trim())
+  const hasOutOfScope = draft.outOfScopeItems.some((item) => item.text.trim())
+  if (!hasInScope && !hasOutOfScope) return ''
+
+  const confirmedDate = formatDateMonthDay(draft.inScopeConfirmedDate)
+  const confirmedText = confirmedDate ? ` (Confirmed as of ${escapeHtml(confirmedDate)})` : ''
+
+  return `
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;font-family:${FONT};clear:both;">
   <tr>
-    <td style="padding:0;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;border:1px solid #BBD4F5;">
-        <tr>
-          <td bgcolor="${HEADER_BG}" style="background-color:${HEADER_BG};height:8px;font-size:1px;line-height:1px;">&nbsp;</td>
-        </tr>
-        <tr>
-          <td bgcolor="#F7FAFF" style="background-color:#F7FAFF;padding:20px 24px 22px 24px;">
-            <p style="margin:0 0 6px 0;font-family:${FONT};font-size:10pt;font-weight:bold;color:${HEADING_COLOR};text-transform:uppercase;letter-spacing:1.2px;">Aurora Mobile</p>
-            <p style="margin:0;font-family:${FONT};font-size:21pt;line-height:1.2;font-weight:bold;color:#172B4D;">Daily QA Status Report</p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:18px 0 0 0;font-family:${FONT};font-size:12pt;line-height:1.55;color:${BODY_COLOR};">
-      <p style="margin:0;">Hi team,</p>
-      <p style="margin:8px 0 0 0;">Please find below my daily status update for <strong>Aurora Mobile</strong> (${escapeHtml(formatDateLong(draft.reportDate))}).</p>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:14px 0 0 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
-        <tr>
-          ${kpiCell(
-            'Report date',
-            `<strong style="color:${BODY_COLOR};">${escapeHtml(formatDateLong(draft.reportDate))}</strong>`,
-            'Daily snapshot',
-          )}
-          ${kpiCell(
-            'Overall status',
-            labelCell(overallLabel, overall.bg, overall.text),
-            'Current QA Status',
-            overall.text,
-          )}
-          ${kpiCell(
-            'Defects',
-            `<strong>${defects.length}</strong> total&nbsp;&nbsp; <span style="color:${HEADING_COLOR};"><strong>${openCount}</strong> open</span>`,
-            `${closedCount} closed or verified`,
-          )}
-        </tr>
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td style="padding:8px 0 0 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;">
-        ${summaryBlock}
-        ${sectionHeading('Current tasks')}
-        ${bulletRows(draft.tasks, 'No tasks listed for today.', draft.jiraBaseUrl, true)}
-        ${sectionHeading('Blockers', BLOCKER_COLOR, SOFT_RED, '#FCA5A5')}
-        ${bulletRows(draft.blockers, 'None reported.', draft.jiraBaseUrl, true, BLOCKER_COLOR)}
-        ${sectionHeading('Highlights')}
-        ${bulletRows(draft.highlights, 'No highlights listed.')}
-        ${sectionHeading('Defects')}
-        ${defectsBlock}
-      </table>
-    </td>
-  </tr>
-  <tr>
-    <td bgcolor="#F3F2F1" style="background-color:#F3F2F1;padding:10px 14px;border-top:1px solid ${BORDER};">
-      <p style="margin:0;font-family:${FONT};font-size:10pt;color:#605E5C;text-align:center;">Aurora Mobile</p>
+    <td style="padding:24px 14px 0 34px;font-family:${SCOPE_FONT};color:#000000;">
+      ${
+        hasInScope
+          ? `<p style="margin:0;font-family:${SCOPE_FONT};font-size:${SCOPE_HEADING_FONT_SIZE};line-height:${SCOPE_LINE_HEIGHT};font-weight:400;color:#000000;"><span style="font-weight:700;text-decoration:underline;">In scope Items:</span>${confirmedText}</p>${scopeList(draft.inScopeItems)}`
+          : ''
+      }
+      ${
+        hasOutOfScope
+          ? `<p style="margin:0;font-family:${SCOPE_FONT};font-size:${SCOPE_HEADING_FONT_SIZE};line-height:${SCOPE_LINE_HEIGHT};font-weight:700;color:#000000;text-decoration:underline;">Out Of Scope:</p>${scopeList(draft.outOfScopeItems)}`
+          : ''
+      }
     </td>
   </tr>
 </table>`
+}
+
+function isTotalRow(row: { functionality: string }): boolean {
+  return row.functionality.trim().toLowerCase() === 'total'
+}
+
+function summaryLabel(title: string): string {
+  return `
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;font-family:${FONT};clear:both;">
+  <tr>
+    <td style="padding:22px 0 3px 8px;font-family:${FONT};font-size:15pt;line-height:1.15;font-weight:700;color:#000000;text-decoration:underline;">
+      ${escapeHtml(title)}
+    </td>
+  </tr>
+</table>`
+}
+
+function reportHeaderCell(label: string, extra = ''): string {
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.2;font-weight:700;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(label)}`
+}
+
+function reportValueCell(value: string, extra = ''): string {
+  return `style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
+}
+
+function totalValueCell(value: string, extra = ''): string {
+  return `style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;${extra}">${escapeHtml(value) || '&nbsp;'}`
+}
+
+function remarksCell(text: string, rowspan: number): string {
+  return `<td rowspan="${rowspan}" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:12px 14px;font-family:${FONT};font-size:13pt;line-height:1.28;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${paragraphText(text)}</td>`
+}
+
+function testDesignSummaryBlock(draft: Draft): string {
+  if (!draft.showTestDesignSummary) return ''
+
+  const rows = draft.testDesignSummaryRows.filter((row) => row.functionality.trim())
+  if (rows.length === 0) return ''
+
+  const normalRows = rows.filter((row) => !isTotalRow(row))
+  const totalRows = rows.filter(isTotalRow)
+  const title = draft.testDesignSummaryTitle.trim() || 'Test Design Summary'
+  const remarks = draft.testDesignSummaryRemarks.trim()
+
+  return `
+${summaryLabel('Test Design Summary:')}
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
+  <colgroup>
+    <col style="width:130px;" />
+    <col style="width:110px;" />
+    <col style="width:125px;" />
+    <col style="width:115px;" />
+    <col style="width:120px;" />
+    <col style="width:180px;" />
+    <col style="width:400px;" />
+  </colgroup>
+  <tr>
+    <td colspan="7" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      ${escapeHtml(title)}
+    </td>
+  </tr>
+  <tr>
+    <td ${reportHeaderCell('Functionality/ Test Cases')}</td>
+    <td ${reportHeaderCell('Total Planned')}</td>
+    <td ${reportHeaderCell('Total Completed')}</td>
+    <td ${reportHeaderCell('Total In Progress')}</td>
+    <td ${reportHeaderCell('Total Not Started')}</td>
+    <td ${reportHeaderCell('Total Completed today')}</td>
+    <td ${reportHeaderCell('Remarks')}</td>
+  </tr>
+  ${normalRows
+    .map(
+      (row, index) => `
+  <tr>
+    <td ${reportValueCell(row.functionality, 'text-align:left;')}</td>
+    <td ${reportValueCell(row.totalPlanned)}</td>
+    <td ${reportValueCell(row.totalCompleted)}</td>
+    <td ${reportValueCell(row.totalInProgress)}</td>
+    <td ${reportValueCell(row.totalNotStarted)}</td>
+    <td ${reportValueCell(row.totalCompletedToday)}</td>
+    ${index === 0 && normalRows.length > 0 ? remarksCell(remarks, normalRows.length) : ''}
+  </tr>`,
+    )
+    .join('')}
+  ${totalRows
+    .map(
+      (row) => `
+  <tr>
+    <td ${totalValueCell(row.functionality)}</td>
+    <td ${totalValueCell(row.totalPlanned)}</td>
+    <td ${totalValueCell(row.totalCompleted)}</td>
+    <td ${totalValueCell(row.totalInProgress)}</td>
+    <td ${totalValueCell(row.totalNotStarted)}</td>
+    <td ${totalValueCell(row.totalCompletedToday)}</td>
+    <td ${totalValueCell('')}</td>
+  </tr>`,
+    )
+    .join('')}
+</table>`
+}
+
+function testExecutionSummaryBlock(draft: Draft): string {
+  if (!draft.showTestExecutionSummary) return ''
+
+  const rows = draft.testExecutionSummaryRows.filter((row) => row.functionality.trim())
+  if (rows.length === 0) return ''
+
+  const normalRows = rows.filter((row) => !isTotalRow(row))
+  const totalRows = rows.filter(isTotalRow)
+  const title = draft.testExecutionSummaryTitle.trim() || 'Test Execution Summary'
+  const remarks = draft.testExecutionSummaryRemarks.trim()
+
+  return `
+${summaryLabel('Test Execution Summary:')}
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
+  <colgroup>
+    <col style="width:140px;" />
+    <col style="width:80px;" />
+    <col style="width:90px;" />
+    <col style="width:90px;" />
+    <col style="width:80px;" />
+    <col style="width:80px;" />
+    <col style="width:130px;" />
+    <col style="width:110px;" />
+    <col style="width:100px;" />
+    <col style="width:280px;" />
+  </colgroup>
+  <tr>
+    <td colspan="10" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      ${escapeHtml(title)}
+    </td>
+  </tr>
+  <tr>
+    <td ${reportHeaderCell('Functionality/ Test Cases')}</td>
+    <td ${reportHeaderCell('Total Planned')}</td>
+    <td ${reportHeaderCell('Total Executed')}</td>
+    <td ${reportHeaderCell('Total Passed')}</td>
+    <td ${reportHeaderCell('Total Failed')}</td>
+    <td ${reportHeaderCell('Total NA')}</td>
+    <td ${reportHeaderCell('Total Not Complete')}</td>
+    <td ${reportHeaderCell('Total Blocked')}</td>
+    <td ${reportHeaderCell('Total No Run')}</td>
+    <td ${reportHeaderCell('Remarks')}</td>
+  </tr>
+  ${normalRows
+    .map(
+      (row, index) => `
+  <tr>
+    <td ${reportValueCell(row.functionality, 'text-align:left;')}</td>
+    <td ${reportValueCell(row.totalPlanned)}</td>
+    <td ${reportValueCell(row.totalExecuted)}</td>
+    <td ${reportValueCell(row.totalPassed)}</td>
+    <td ${reportValueCell(row.totalFailed)}</td>
+    <td ${reportValueCell(row.totalNa)}</td>
+    <td ${reportValueCell(row.totalNotComplete)}</td>
+    <td ${reportValueCell(row.totalBlocked)}</td>
+    <td ${reportValueCell(row.totalNoRun)}</td>
+    ${index === 0 && normalRows.length > 0 ? remarksCell(remarks, normalRows.length) : ''}
+  </tr>`,
+    )
+    .join('')}
+  ${totalRows
+    .map(
+      (row) => `
+  <tr>
+    <td ${totalValueCell(row.functionality)}</td>
+    <td ${totalValueCell(row.totalPlanned)}</td>
+    <td ${totalValueCell(row.totalExecuted)}</td>
+    <td ${totalValueCell(row.totalPassed)}</td>
+    <td ${totalValueCell(row.totalFailed)}</td>
+    <td ${totalValueCell(row.totalNa)}</td>
+    <td ${totalValueCell(row.totalNotComplete)}</td>
+    <td ${totalValueCell(row.totalBlocked)}</td>
+    <td ${totalValueCell(row.totalNoRun)}</td>
+    <td ${totalValueCell('')}</td>
+  </tr>`,
+    )
+    .join('')}
+</table>`
+}
+
+function optionalSummaryTablesBlock(draft: Draft): string {
+  return `${testDesignSummaryBlock(draft)}${testExecutionSummaryBlock(draft)}`
+}
+
+function defectsSummaryTableBlock(draft: Draft): string {
+  const defects = draft.defects.filter(
+    (defect) =>
+      defect.title.trim() ||
+      (defect.jiraId ?? '').trim() ||
+      defect.note.trim() ||
+      defect.link.trim(),
+  )
+
+  if (defects.length === 0) return ''
+
+  return `
+${summaryLabel('Defects Summary:')}
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
+  <colgroup>
+    <col style="width:170px;" />
+    <col style="width:170px;" />
+    <col style="width:470px;" />
+    <col style="width:370px;" />
+  </colgroup>
+  <tr>
+    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      Defects Summary
+    </td>
+  </tr>
+  <tr>
+    <td ${reportHeaderCell('Defect Status')}</td>
+    <td ${reportHeaderCell('JIRA ID')}</td>
+    <td ${reportHeaderCell('Description/ Name')}</td>
+    <td ${reportHeaderCell('Notes')}</td>
+  </tr>
+  ${defects
+    .map(
+      (defect) => `
+  <tr>
+    <td ${reportValueCell(defect.status)}</td>
+    <td style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${defectJiraLink(defect, draft.jiraBaseUrl)}</td>
+    <td ${reportValueCell(defect.title.trim(), 'text-align:left;')}</td>
+    <td ${reportValueCell(defect.note.trim(), 'text-align:left;')}</td>
+  </tr>`,
+    )
+    .join('')}
+</table>`
+}
+
+export function formatReportBody(draft: Draft): string {
+  const ragReason = draft.ragReason.trim() || draft.summary.trim()
+  const trendReason = draft.trendReason.trim()
+  const ragFill = statusFill(draft)
+  const anticipatedFill = ragColor(draft.anticipatedTrend)
+
+  return `
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};border:1px solid ${GRID};">
+  <colgroup>
+    <col style="width:235px;" />
+    <col style="width:445px;" />
+    <col style="width:180px;" />
+    <col style="width:320px;" />
+  </colgroup>
+  <tr>
+    <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:15pt;line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      ${escapeHtml(titleText(draft))}
+    </td>
+  </tr>
+  <tr>
+    <td ${labelCell('Application/ Microservice Name')}</td>
+    <td ${valueCell(draft.applicationName, 'font-size:12.5pt;')}</td>
+    <td ${labelCell("Today's RAG", 'font-size:14pt;', true)}</td>
+    <td style="background-color:${ragFill};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:14pt;line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      &nbsp;
+    </td>
+  </tr>
+  <tr>
+    <td ${labelCell('Project QA Start Dt')}</td>
+    <td ${valueCell(formatDateShort(draft.projectQaStartDate))}</td>
+    <td rowspan="2" ${labelCell('Reason(If other than Green)', 'height:96px;', true)}</td>
+    <td rowspan="2" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${FONT};font-size:13pt;line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
+      ${paragraphText(ragReason)}
+    </td>
+  </tr>
+  <tr>
+    <td ${labelCell('Project QA Sign Off Dt', 'height:86px;')}</td>
+    <td ${valueCell(formatDateShort(draft.projectQaSignOffDate), 'height:86px;')}</td>
+  </tr>
+  <tr>
+    <td ${labelCell('Planned Go-Live Dt')}</td>
+    <td ${valueCell(formatDateShort(draft.plannedGoLiveDate))}</td>
+    <td ${labelCell('Anticipated Trend', 'font-size:14pt;', true)}</td>
+    <td style="background-color:${anticipatedFill};border:1px solid ${GRID};padding:7px 8px;font-family:${FONT};font-size:14pt;line-height:1.15;font-weight:400;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      &nbsp;
+    </td>
+  </tr>
+  <tr>
+    <td ${labelCell('Testing Type')}</td>
+    <td ${valueCell(draft.testingType)}</td>
+    <td rowspan="3" ${labelCell('Reason(If other than Green)', 'height:106px;', true)}</td>
+    <td rowspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:13px 8px;font-family:${FONT};font-size:13pt;line-height:1.3;color:${BODY_COLOR};vertical-align:middle;">
+      ${paragraphText(trendReason)}
+    </td>
+  </tr>
+  <tr>
+    <td ${labelCell('Test Environment')}</td>
+    <td ${valueCell(draft.testEnvironment)}</td>
+  </tr>
+  <tr>
+    <td ${labelCell('QE')}</td>
+    <td ${valueCell(draft.qeOwner)}</td>
+  </tr>
+  <tr>
+    <td colspan="2" ${sectionBar('Key Highlights')}</td>
+    <td colspan="2" ${sectionBar('Test Results Distribution', 'center')}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:22px 18px 22px 18px;font-family:${FONT};font-size:13pt;line-height:1.35;color:#000000;vertical-align:top;height:236px;">
+      ${bulletList(draft)}
+    </td>
+    <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:24px;font-family:${FONT};font-size:13pt;line-height:1.35;color:#000000;text-align:center;vertical-align:middle;height:236px;">
+      ${defectsSummary(draft)}
+    </td>
+  </tr>
+  <tr>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Evidence/ XRAY Path</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testEvidencePath)}</td>
+  </tr>
+  <tr>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Test Artifacts (Confluence)</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.testArtifacts)}</td>
+  </tr>
+  <tr>
+    <td style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.1;font-weight:400;color:#FFFFFF;vertical-align:middle;">Environment Downtime Tracker</td>
+    <td colspan="3" style="background-color:#FFFFFF;border:1px solid ${GRID};padding:5px 8px;font-family:${FONT};font-size:13pt;line-height:1.15;color:${BODY_COLOR};vertical-align:middle;">${linkedValue(draft.environmentDowntime)}</td>
+  </tr>
+</table>
+${scopeBlock(draft)}
+${optionalSummaryTablesBlock(draft)}
+${defectsSummaryTableBlock(draft)}`
 }
 
 export function formatReportHtml(draft: Draft): string {
@@ -309,7 +590,7 @@ export function formatReportHtml(draft: Draft): string {
 </noscript>
 <![endif]-->
 </head>
-<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${FONT};font-size:12pt;color:${BODY_COLOR};">
+<body style="margin:0;padding:12px;background-color:#FFFFFF;font-family:${FONT};font-size:13pt;color:${BODY_COLOR};">
 ${body}
 </body>
 </html>`
