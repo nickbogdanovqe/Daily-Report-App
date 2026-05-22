@@ -6,7 +6,7 @@ interface ReportPreviewProps {
   draft: Draft
 }
 
-const REPORT_WIDTH = 1180
+const REPORT_WIDTH = 980
 
 export function ReportPreview({ draft }: ReportPreviewProps) {
   const html = formatReportBody(draft)

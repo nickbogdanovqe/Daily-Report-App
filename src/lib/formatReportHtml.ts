@@ -8,7 +8,7 @@ const BODY_FONT = 'Aptos, Calibri, sans-serif'
 const HEADER_FONT_SIZE = '12pt'
 const BODY_FONT_SIZE = '11pt'
 const SMALL_FONT_SIZE = '10pt'
-const WIDTH = 1180
+const WIDTH = 980
 const BLUE = '#2F5B93'
 const GRID = '#2B6EEB'
 const LABEL_BG = '#D9E2F3'
@@ -300,13 +300,13 @@ function testDesignSummaryBlock(draft: Draft): string {
 ${summaryLabel('Test Design Summary:')}
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
   <colgroup>
-    <col style="width:130px;" />
     <col style="width:110px;" />
-    <col style="width:125px;" />
-    <col style="width:115px;" />
-    <col style="width:120px;" />
-    <col style="width:180px;" />
-    <col style="width:400px;" />
+    <col style="width:90px;" />
+    <col style="width:105px;" />
+    <col style="width:95px;" />
+    <col style="width:100px;" />
+    <col style="width:145px;" />
+    <col style="width:335px;" />
   </colgroup>
   <tr>
     <td colspan="7" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
@@ -368,16 +368,16 @@ function testExecutionSummaryBlock(draft: Draft): string {
 ${summaryLabel('Test Execution Summary:')}
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
   <colgroup>
-    <col style="width:140px;" />
-    <col style="width:80px;" />
-    <col style="width:90px;" />
-    <col style="width:90px;" />
-    <col style="width:80px;" />
-    <col style="width:80px;" />
-    <col style="width:130px;" />
+    <col style="width:115px;" />
+    <col style="width:70px;" />
+    <col style="width:75px;" />
+    <col style="width:75px;" />
+    <col style="width:70px;" />
+    <col style="width:70px;" />
     <col style="width:110px;" />
-    <col style="width:100px;" />
-    <col style="width:280px;" />
+    <col style="width:90px;" />
+    <col style="width:85px;" />
+    <col style="width:220px;" />
   </colgroup>
   <tr>
     <td colspan="10" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
@@ -452,10 +452,10 @@ function defectsSummaryTableBlock(draft: Draft): string {
 ${summaryLabel('Defects Summary:')}
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
   <colgroup>
-    <col style="width:170px;" />
-    <col style="width:170px;" />
-    <col style="width:470px;" />
-    <col style="width:370px;" />
+    <col style="width:140px;" />
+    <col style="width:140px;" />
+    <col style="width:390px;" />
+    <col style="width:310px;" />
   </colgroup>
   <tr>
     <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
@@ -491,10 +491,10 @@ export function formatReportBody(draft: Draft): string {
   return `
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};border:1px solid ${GRID};">
   <colgroup>
-    <col style="width:235px;" />
-    <col style="width:445px;" />
-    <col style="width:180px;" />
-    <col style="width:320px;" />
+    <col style="width:195px;" />
+    <col style="width:370px;" />
+    <col style="width:150px;" />
+    <col style="width:265px;" />
   </colgroup>
   <tr>
     <td colspan="4" style="background-color:${BLUE};border:1px solid ${GRID};padding:5px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
