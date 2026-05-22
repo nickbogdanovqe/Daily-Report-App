@@ -8,7 +8,6 @@ import type {
 } from '../types'
 
 export const STORAGE_KEY = 'aurora-daily-report-draft-v1'
-export const PREVIOUS_STORAGE_KEY = 'aurora-daily-report-previous-v1'
 export const LAST_ACTIVE_DATE_KEY = 'aurora-daily-report-last-active-v1'
 
 export function createId(): string {
@@ -282,22 +281,8 @@ export function loadDraft(): Draft {
   }
 }
 
-export function loadPreviousReport(): Draft | null {
-  try {
-    const raw = localStorage.getItem(PREVIOUS_STORAGE_KEY)
-    if (!raw) return null
-    return normalizeDraft(JSON.parse(raw) as StoredDraft)
-  } catch {
-    return null
-  }
-}
-
 export function saveDraft(draft: Draft): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(draft))
-}
-
-export function savePreviousReport(draft: Draft): void {
-  localStorage.setItem(PREVIOUS_STORAGE_KEY, JSON.stringify(draft))
 }
 
 export function loadLastActiveDate(): string | null {
@@ -315,14 +300,12 @@ function carryDraftForward(draft: Draft, newDate: string): Draft {
 
 export type SessionInit = {
   draft: Draft
-  /** ISO date of the report that was archived as "previous" on this open */
+  /** ISO date of the report that was carried forward on this open */
   rolledFromDate: string | null
-  previousReport: Draft | null
 }
 
 /**
- * On a new calendar day: save the last session's draft as "previous",
- * then open today with that same content ready to edit.
+ * On a new calendar day: open today with the existing content ready to edit.
  */
 export function initializeSessionDraft(): SessionInit {
   const today = todayIsoDate()
@@ -345,7 +328,6 @@ export function initializeSessionDraft(): SessionInit {
       draft.defects.some((d) => d.title.trim())
 
     if (hasContent || isNewDay) {
-      savePreviousReport(draft)
       rolledFromDate = lastActive ?? draft.reportDate
     }
 
@@ -354,9 +336,8 @@ export function initializeSessionDraft(): SessionInit {
   }
 
   saveLastActiveDate(today)
-  const previousReport = loadPreviousReport()
 
-  return { draft, rolledFromDate, previousReport }
+  return { draft, rolledFromDate }
 }
 
 export function clearDraft(): void {

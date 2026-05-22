@@ -1,7 +1,6 @@
 import { DayRolloverBanner } from './components/DayRolloverBanner'
 import { DefectEditor } from './components/DefectEditor'
 import { EditableList } from './components/EditableList'
-import { PreviousReportPanel } from './components/PreviousReportPanel'
 import { ReportMeta } from './components/ReportMeta'
 import { ReportPreview } from './components/ReportPreview'
 import { Section } from './components/Section'
@@ -16,7 +15,6 @@ function App() {
     resetDraft,
     lastSaved,
     rolledFromDate,
-    previousReport,
     dismissRolloverNotice,
   } = useDraft()
 
@@ -75,9 +73,6 @@ function App() {
             />
           )}
           <ReportMeta draft={draft} onChange={updateDraft} />
-          {previousReport && previousReport.reportDate !== draft.reportDate && (
-            <PreviousReportPanel previousReport={previousReport} />
-          )}
 
           <Section title="Highlights" count={draft.highlights.length} variant="highlights">
             <EditableList

@@ -21,7 +21,6 @@ export function useDraft() {
   const [rolledFromDate, setRolledFromDate] = useState<string | null>(
     initialSession.rolledFromDate,
   )
-  const [previousReport] = useState<Draft | null>(initialSession.previousReport)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const isFirstRender = useRef(true)
 
@@ -67,7 +66,6 @@ export function useDraft() {
     resetDraft,
     lastSaved,
     rolledFromDate,
-    previousReport,
     dismissRolloverNotice,
   }
 }
