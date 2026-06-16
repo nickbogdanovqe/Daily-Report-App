@@ -97,7 +97,7 @@ function App() {
           </Section>
         </div>
 
-        <div className="flex min-h-[520px] flex-col lg:sticky lg:top-8 lg:h-[calc(100svh-9rem)] lg:min-h-0">
+        <div className="flex min-h-[640px] flex-col lg:sticky lg:top-4 lg:h-[calc(100svh-6rem)] lg:min-h-0">
           <ReportPreview draft={draft} />
         </div>
       </main>
