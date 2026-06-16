@@ -6,13 +6,13 @@ interface ReportPreviewProps {
   draft: Draft
 }
 
-const REPORT_WIDTH = 980
+const MIN_REPORT_WIDTH = 980
 
 export function ReportPreview({ draft }: ReportPreviewProps) {
   const html = formatReportBody(draft)
   const viewportRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
-  const [preview, setPreview] = useState({ scale: 1, height: 0 })
+  const [preview, setPreview] = useState({ scale: 1, width: MIN_REPORT_WIDTH, height: 0 })
 
   useEffect(() => {
     const updatePreviewSize = () => {
@@ -20,10 +20,15 @@ export function ReportPreview({ draft }: ReportPreviewProps) {
       const page = pageRef.current
       if (!viewport || !page) return
 
+      // Measure the report's natural width (unaffected by the CSS transform)
+      // so a table wider than the page still scales to fit instead of
+      // overflowing into a horizontal scroll.
+      const reportWidth = Math.max(page.scrollWidth, MIN_REPORT_WIDTH)
       const availableWidth = Math.max(viewport.clientWidth, 320)
-      const scale = Math.min(1, availableWidth / REPORT_WIDTH)
+      const scale = Math.min(1, availableWidth / reportWidth)
       setPreview({
         scale,
+        width: reportWidth,
         height: Math.ceil(page.scrollHeight * scale),
       })
     }
@@ -72,14 +77,15 @@ export function ReportPreview({ draft }: ReportPreviewProps) {
           className="mx-auto"
           style={{
             height: preview.height || undefined,
-            maxWidth: REPORT_WIDTH * preview.scale,
+            width: preview.width * preview.scale,
           }}
         >
           <div
             ref={pageRef}
-            className="origin-top-left overflow-hidden rounded-sm bg-white p-0 shadow-xl shadow-slate-400/30 ring-1 ring-slate-300/70"
+            className="origin-top-left rounded-sm bg-white p-0 shadow-xl shadow-slate-400/30 ring-1 ring-slate-300/70"
             style={{
-              width: REPORT_WIDTH,
+              width: 'max-content',
+              minWidth: MIN_REPORT_WIDTH,
               transform: `scale(${preview.scale})`,
             }}
             dangerouslySetInnerHTML={{ __html: html }}
