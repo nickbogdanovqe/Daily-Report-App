@@ -6,13 +6,15 @@ interface ReportPreviewProps {
   draft: Draft
 }
 
-const MIN_REPORT_WIDTH = 980
+// The report tables are authored at a fixed 980px width, so the page never
+// needs to be wider than this.
+const REPORT_WIDTH = 980
 
 export function ReportPreview({ draft }: ReportPreviewProps) {
   const html = formatReportBody(draft)
   const viewportRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
-  const [preview, setPreview] = useState({ scale: 1, width: MIN_REPORT_WIDTH, height: 0 })
+  const [preview, setPreview] = useState({ scale: 1, width: REPORT_WIDTH, height: 0 })
 
   useEffect(() => {
     const updatePreviewSize = () => {
@@ -20,15 +22,21 @@ export function ReportPreview({ draft }: ReportPreviewProps) {
       const page = pageRef.current
       if (!viewport || !page) return
 
-      // Measure the report's natural width (unaffected by the CSS transform)
-      // so a table wider than the page still scales to fit instead of
-      // overflowing into a horizontal scroll.
-      const reportWidth = Math.max(page.scrollWidth, MIN_REPORT_WIDTH)
-      const availableWidth = Math.max(viewport.clientWidth, 320)
-      const scale = Math.min(1, availableWidth / reportWidth)
+      // clientWidth includes the viewport's own padding, so subtract it to get
+      // the width actually available to the page.
+      const styles = getComputedStyle(viewport)
+      const paddingX =
+        parseFloat(styles.paddingLeft || '0') + parseFloat(styles.paddingRight || '0')
+      const availableWidth = Math.max(viewport.clientWidth - paddingX, 320)
+
+      // Scale the whole page down to fit the available width. A CSS transform
+      // shrinks the page visually but NOT its layout box, so the scaled
+      // dimensions are mirrored onto the wrapper (with overflow hidden) to keep
+      // the footprint correct and avoid any horizontal scrolling.
+      const scale = Math.min(1, availableWidth / REPORT_WIDTH)
       setPreview({
         scale,
-        width: reportWidth,
+        width: Math.ceil(REPORT_WIDTH * scale),
         height: Math.ceil(page.scrollHeight * scale),
       })
     }
@@ -71,21 +79,20 @@ export function ReportPreview({ draft }: ReportPreviewProps) {
       </div>
       <div
         ref={viewportRef}
-        className="flex-1 overflow-auto bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.08),transparent_24rem),#e5e7eb] p-4 sm:p-6"
+        className="flex-1 overflow-y-auto overflow-x-hidden bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.08),transparent_24rem),#e5e7eb] p-4 sm:p-6"
       >
         <div
-          className="mx-auto"
+          className="mx-auto overflow-hidden"
           style={{
+            width: preview.width,
             height: preview.height || undefined,
-            width: preview.width * preview.scale,
           }}
         >
           <div
             ref={pageRef}
             className="origin-top-left rounded-sm bg-white p-0 shadow-xl shadow-slate-400/30 ring-1 ring-slate-300/70"
             style={{
-              width: 'max-content',
-              minWidth: MIN_REPORT_WIDTH,
+              width: REPORT_WIDTH,
               transform: `scale(${preview.scale})`,
             }}
             dangerouslySetInnerHTML={{ __html: html }}
