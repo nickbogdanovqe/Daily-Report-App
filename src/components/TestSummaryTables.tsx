@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type {
   Draft,
   TestDesignSummaryRow,
@@ -8,6 +9,8 @@ import {
   resolveTestExecutionSummaryTitle,
 } from '../lib/reportLabels'
 import { createId } from '../lib/storage'
+import { validateTestSummaries } from '../lib/validateTestSummaries'
+import { isFieldHighlighted, ValidationPanel } from './ValidationPanel'
 
 interface TestSummaryTablesProps {
   draft: Draft
@@ -112,6 +115,21 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
   const designTitlePlaceholder = resolveTestDesignSummaryTitle(draft)
   const executionTitlePlaceholder = resolveTestExecutionSummaryTitle(draft)
 
+  const validationIssues = useMemo(
+    () => validateTestSummaries(draft),
+    [
+      draft.showTestDesignSummary,
+      draft.showTestExecutionSummary,
+      draft.testDesignSummaryRows,
+      draft.testExecutionSummaryRows,
+    ],
+  )
+
+  const showValidationPanel =
+    draft.showTestDesignSummary || draft.showTestExecutionSummary
+
+  const highlightedInputClass = 'ring-1 ring-red-300'
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -126,6 +144,8 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
           onChange={(showTestExecutionSummary) => onChange({ showTestExecutionSummary })}
         />
       </div>
+
+      {showValidationPanel && <ValidationPanel issues={validationIssues} />}
 
       <div className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -196,7 +216,16 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
                         type="text"
                         value={row[field]}
                         onChange={(e) => updateDesignRow(row.id, field, e.target.value)}
-                        className={numberInputClass}
+                        className={`${numberInputClass}${
+                          isFieldHighlighted(
+                            validationIssues,
+                            'design',
+                            row.id,
+                            field,
+                          )
+                            ? ` ${highlightedInputClass}`
+                            : ''
+                        }`}
                       />
                     </td>
                   ))}
@@ -259,7 +288,16 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
                           type="text"
                           value={row[field]}
                           onChange={(e) => updateDesignRow(row.id, field, e.target.value)}
-                          className={numberInputClass}
+                          className={`${numberInputClass}${
+                            isFieldHighlighted(
+                              validationIssues,
+                              'design',
+                              row.id,
+                              field,
+                            )
+                              ? ` ${highlightedInputClass}`
+                              : ''
+                          }`}
                         />
                       </td>
                     ))}
@@ -348,7 +386,16 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
                         type="text"
                         value={row[field]}
                         onChange={(e) => updateExecutionRow(row.id, field, e.target.value)}
-                        className={numberInputClass}
+                        className={`${numberInputClass}${
+                          isFieldHighlighted(
+                            validationIssues,
+                            'execution',
+                            row.id,
+                            field,
+                          )
+                            ? ` ${highlightedInputClass}`
+                            : ''
+                        }`}
                       />
                     </td>
                   ))}

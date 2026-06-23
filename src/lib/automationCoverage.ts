@@ -1,6 +1,6 @@
 import type { TestDesignSummaryRow } from '../types'
 
-function isTotalRow(row: { functionality: string }): boolean {
+export function isTotalRow(row: { functionality: string }): boolean {
   return row.functionality.trim().toLowerCase() === 'total'
 }
 

@@ -2,6 +2,7 @@ import type { Defect, Draft, ListItem, OverallStatus } from '../types'
 import {
   formatAutomationPercent,
   getAutomationTotals,
+  isTotalRow,
 } from './automationCoverage'
 import { buildAutomationPieChartHtml } from './automationPieChartHtml'
 import {
@@ -273,10 +274,6 @@ function scopeBlock(draft: Draft): string {
     </td>
   </tr>
 </table>`
-}
-
-function isTotalRow(row: { functionality: string }): boolean {
-  return row.functionality.trim().toLowerCase() === 'total'
 }
 
 function summaryLabel(title: string): string {
