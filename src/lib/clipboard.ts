@@ -1,16 +1,17 @@
 import { formatReport } from './formatReport'
 import { formatReportBody } from './formatReportHtml'
-import { copyHtmlViaSelection } from './outlookClipboard'
+import { copyHtmlViaSelection, wrapHtmlForClipboard } from './outlookClipboard'
 import type { Draft } from '../types'
 
 export async function copyReportToClipboard(draft: Draft): Promise<boolean> {
   const plain = formatReport(draft)
   const fragment = formatReportBody(draft)
+  const htmlDocument = wrapHtmlForClipboard(fragment)
 
   // 1) Browser Clipboard API expects raw HTML, not CF_HTML headers.
   try {
     if (navigator.clipboard?.write) {
-      const htmlBlob = new Blob([fragment], { type: 'text/html' })
+      const htmlBlob = new Blob([htmlDocument], { type: 'text/html' })
       const plainBlob = new Blob([plain], { type: 'text/plain' })
       await navigator.clipboard.write([
         new ClipboardItem({

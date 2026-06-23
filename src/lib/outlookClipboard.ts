@@ -7,6 +7,10 @@
 const START_FRAGMENT = '<!--StartFragment-->'
 const END_FRAGMENT = '<!--EndFragment-->'
 
+export function wrapHtmlForClipboard(fragmentHtml: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${START_FRAGMENT}${fragmentHtml}${END_FRAGMENT}</body></html>`
+}
+
 function padOffset(n: number): string {
   return String(n).padStart(10, '0')
 }
