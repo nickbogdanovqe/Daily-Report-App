@@ -78,6 +78,8 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
           totalInProgress: '0',
           totalNotStarted: '0',
           totalCompletedToday: '0',
+          totalAutomated: '0',
+          totalManual: '0',
         },
       ],
     })
@@ -215,6 +217,46 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
         >
           + Add design row
         </button>
+
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Automation breakdown</p>
+            <p className="text-xs text-slate-500">
+              Used for the Automated vs Manual Coverage chart. Not shown in the Test Design Summary
+              table.
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <table className="min-w-[480px] w-full border-collapse bg-white text-sm">
+              <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wide text-slate-600">
+                <tr>
+                  <th className="border border-slate-200 px-2 py-2 text-left">Functionality</th>
+                  <th className="border border-slate-200 px-2 py-2">Automated</th>
+                  <th className="border border-slate-200 px-2 py-2">Manual</th>
+                </tr>
+              </thead>
+              <tbody>
+                {draft.testDesignSummaryRows.map((row) => (
+                  <tr key={`automation-${row.id}`}>
+                    <td className="border border-slate-200 px-2 py-2 text-slate-700">
+                      {row.functionality.trim() || 'Untitled'}
+                    </td>
+                    {(['totalAutomated', 'totalManual'] as const).map((field) => (
+                      <td key={field} className="border border-slate-200 p-1">
+                        <input
+                          type="text"
+                          value={row[field]}
+                          onChange={(e) => updateDesignRow(row.id, field, e.target.value)}
+                          className={numberInputClass}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3">

@@ -28,6 +28,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
+      totalAutomated: '0',
+      totalManual: '0',
     },
     {
       id: createId(),
@@ -37,6 +39,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
+      totalAutomated: '0',
+      totalManual: '0',
     },
     {
       id: createId(),
@@ -46,6 +50,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
+      totalAutomated: '0',
+      totalManual: '0',
     },
     {
       id: createId(),
@@ -55,6 +61,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
+      totalAutomated: '0',
+      totalManual: '0',
     },
     {
       id: createId(),
@@ -64,6 +72,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
+      totalAutomated: '0',
+      totalManual: '0',
     },
   ]
 }
@@ -149,7 +159,6 @@ export function createEmptyDraft(): Draft {
     anticipatedTrend: 'Green',
     ragReason: '',
     trendReason: '',
-    testResultsDistribution: '',
     testEvidencePath: '',
     testArtifacts: 'Not Available Yet.',
     environmentDowntime: 'NA',
@@ -223,6 +232,8 @@ function normalizeDesignRows(rows: StoredDesignRow[] | undefined): TestDesignSum
     totalInProgress: row.totalInProgress ?? '',
     totalNotStarted: row.totalNotStarted ?? '',
     totalCompletedToday: row.totalCompletedToday ?? '',
+    totalAutomated: row.totalAutomated ?? '0',
+    totalManual: row.totalManual ?? '0',
   }))
 }
 

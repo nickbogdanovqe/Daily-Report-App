@@ -31,6 +31,8 @@ export interface TestDesignSummaryRow {
   totalInProgress: string
   totalNotStarted: string
   totalCompletedToday: string
+  totalAutomated: string
+  totalManual: string
 }
 
 export interface TestExecutionSummaryRow {
@@ -61,7 +63,6 @@ export interface Draft {
   anticipatedTrend: OverallStatus
   ragReason: string
   trendReason: string
-  testResultsDistribution: string
   testEvidencePath: string
   testArtifacts: string
   environmentDowntime: string

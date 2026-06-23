@@ -1,4 +1,5 @@
 import type { Draft, ListItem } from '../types'
+import { formatAutomationCoverageText, getAutomationTotals } from './automationCoverage'
 import { formatOverallLabel } from './reportTheme'
 
 function formatDateShort(isoDate: string): string {
@@ -68,24 +69,9 @@ function formatBulletList(
     .join('\n')
 }
 
-function formatDefects(draft: Draft): string {
-  const defects = draft.defects.filter((d) => d.title.trim())
-  if (draft.testResultsDistribution.trim()) return draft.testResultsDistribution.trim()
-  if (defects.length === 0) return 'Will update after test execution starts'
-
-  return defects
-    .map((d) => {
-      const jiraId = (d.jiraId ?? '').trim().toUpperCase()
-      const jiraUrl = formatJiraUrl(draft.jiraBaseUrl, jiraId)
-      const jiraText = jiraId
-        ? jiraUrl
-          ? `[${jiraId}] ${jiraUrl} - `
-          : `[${jiraId}] `
-        : ''
-      const note = d.note.trim() ? ` - ${d.note.trim()}` : ''
-      return `[${d.status}] ${jiraText}${d.title.trim()}${note}`
-    })
-    .join('\n')
+function formatAutomationCoverage(draft: Draft): string {
+  const { automated, manual } = getAutomationTotals(draft.testDesignSummaryRows)
+  return formatAutomationCoverageText(automated, manual)
 }
 
 function appendScopeLines(draft: Draft, lines: string[]): void {
@@ -185,8 +171,8 @@ export function formatReport(draft: Draft): string {
 
   lines.push(
     '',
-    'Test Results Distribution',
-    formatDefects(draft),
+    'Automated vs Manual Coverage',
+    formatAutomationCoverage(draft),
     '',
     `Test Evidence / XRAY Path: ${draft.testEvidencePath.trim() || 'N/A'}`,
     `Test Artifacts (Confluence): ${draft.testArtifacts.trim() || 'N/A'}`,

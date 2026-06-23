@@ -205,17 +205,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <FieldLabel>Test Results Distribution</FieldLabel>
-          <textarea
-            value={draft.testResultsDistribution}
-            onChange={(e) => updateText('testResultsDistribution', e.target.value)}
-            rows={3}
-            placeholder="Will update after test execution starts"
-            className={`${inputClass} resize-y leading-relaxed`}
-          />
-        </label>
+      <div className="grid gap-4 sm:grid-cols-1">
         <label className="block">
           <FieldLabel>Executive Summary</FieldLabel>
           <textarea

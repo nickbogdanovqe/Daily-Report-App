@@ -1,5 +1,9 @@
 import type { Defect, Draft, ListItem, OverallStatus } from '../types'
-import { escapeHtml, resolveOverallStatus, statusColors } from './reportTheme'
+import {
+  formatAutomationPercent,
+  getAutomationTotals,
+} from './automationCoverage'
+import { escapeHtml, resolveOverallStatus } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
 const FONT = 'Aptos, Calibri, sans-serif'
@@ -7,7 +11,6 @@ const HEADER_FONT = 'Aptos, Calibri, sans-serif'
 const BODY_FONT = 'Aptos, Calibri, sans-serif'
 const HEADER_FONT_SIZE = '12pt'
 const BODY_FONT_SIZE = '11pt'
-const SMALL_FONT_SIZE = '10pt'
 const WIDTH = 980
 const BLUE = '#2F5B93'
 const GRID = '#2B6EEB'
@@ -21,6 +24,8 @@ const SCOPE_LINE_HEIGHT = '1.18'
 const RAG_GREEN = '#70AD47'
 const RAG_AMBER = '#D57132'
 const RAG_RED = '#C00000'
+const AUTOMATED_COLOR = '#2B49C8'
+const MANUAL_COLOR = '#94A3B8'
 
 function formatDateShort(isoDate: string): string {
   if (!isoDate.trim()) return ''
@@ -142,41 +147,77 @@ function bulletList(draft: Draft): string {
     </table>`
 }
 
-function defectsSummary(draft: Draft): string {
-  const defects = draft.defects.filter((d) => d.title.trim())
-  if (draft.testResultsDistribution.trim()) return paragraphText(draft.testResultsDistribution)
-  if (defects.length === 0) {
-    return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;font-weight:400;color:#111111;text-align:center;">Will update after test execution starts</p>`
+function pieSlicePath(
+  cx: number,
+  cy: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number,
+): string {
+  const startX = cx + radius * Math.cos(startAngle)
+  const startY = cy + radius * Math.sin(startAngle)
+  const endX = cx + radius * Math.cos(endAngle)
+  const endY = cy + radius * Math.sin(endAngle)
+  const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
+
+  return `M ${cx} ${cy} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY} Z`
+}
+
+function automationPieChartSvg(automated: number, manual: number): string {
+  const total = automated + manual
+  const size = 140
+  const cx = size / 2
+  const cy = size / 2
+  const radius = size / 2 - 2
+
+  if (total <= 0) return ''
+
+  const automatedAngle = (automated / total) * Math.PI * 2
+  const startAngle = -Math.PI / 2
+  const automatedEnd = startAngle + automatedAngle
+  const endAngle = startAngle + Math.PI * 2
+
+  const slices =
+    automated > 0 && manual > 0
+      ? `<path d="${pieSlicePath(cx, cy, radius, startAngle, automatedEnd)}" fill="${AUTOMATED_COLOR}" />
+         <path d="${pieSlicePath(cx, cy, radius, automatedEnd, endAngle)}" fill="${MANUAL_COLOR}" />`
+      : automated > 0
+        ? `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${AUTOMATED_COLOR}" />`
+        : `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${MANUAL_COLOR}" />`
+
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Automation coverage pie chart">${slices}</svg>`
+}
+
+function automationCoverageBlock(draft: Draft): string {
+  const { automated, manual } = getAutomationTotals(draft.testDesignSummaryRows)
+  const total = automated + manual
+
+  if (total <= 0) {
+    return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;font-weight:400;color:#111111;text-align:center;">Enter automated and manual counts in Test Design Summary</p>`
   }
 
-  const openCount = defects.filter(
-    (d) => d.status === 'Open' || d.status === 'New' || d.status === 'In progress',
-  ).length
+  const automatedPercent = formatAutomationPercent(automated, total)
+  const manualPercent = formatAutomationPercent(manual, total)
 
   return `
-    <p style="margin:0 0 10px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.25;font-weight:400;color:#111111;text-align:center;">
-      ${defects.length} total defects / ${openCount} open
-    </p>
     <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;font-family:${BODY_FONT};">
-      ${defects
-        .map((defect) => {
-          const status = statusColors(defect.status)
-          const jiraId = (defect.jiraId ?? '').trim().toUpperCase()
-          const jiraUrl = jiraHref(draft.jiraBaseUrl, jiraId)
-          const jira = jiraId
-            ? jiraUrl
-              ? `<a href="${escapeHtml(jiraUrl)}" style="color:#2B49C8;text-decoration:underline;font-weight:400;">${escapeHtml(jiraId)}</a> `
-              : `${escapeHtml(jiraId)} `
-            : ''
-          return `
       <tr>
-        <td style="padding:3px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.25;color:${BODY_COLOR};">
-          <span style="font-family:${BODY_FONT};font-size:${SMALL_FONT_SIZE};font-weight:400;background-color:${status.bg};color:${status.text};padding:2px 5px;">${escapeHtml(defect.status)}</span>
-          ${jira}${escapeHtml(defect.title.trim())}
+        <td align="center" style="padding:0 0 12px 0;text-align:center;">
+          ${automationPieChartSvg(automated, manual)}
         </td>
-      </tr>`
-        })
-        .join('')}
+      </tr>
+      <tr>
+        <td style="padding:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};text-align:center;">
+          <span style="display:inline-block;margin:0 10px 6px 10px;">
+            <span style="display:inline-block;width:10px;height:10px;background-color:${AUTOMATED_COLOR};margin-right:6px;vertical-align:middle;"></span>
+            Automated: ${escapeHtml(String(automated))} (${escapeHtml(automatedPercent)})
+          </span>
+          <span style="display:inline-block;margin:0 10px 6px 10px;">
+            <span style="display:inline-block;width:10px;height:10px;background-color:${MANUAL_COLOR};margin-right:6px;vertical-align:middle;"></span>
+            Manual: ${escapeHtml(String(manual))} (${escapeHtml(manualPercent)})
+          </span>
+        </td>
+      </tr>
     </table>`
 }
 
@@ -547,14 +588,14 @@ export function formatReportBody(draft: Draft): string {
   </tr>
   <tr>
     <td colspan="2" ${sectionBar('Key Highlights')}</td>
-    <td colspan="2" ${sectionBar('Test Results Distribution', 'center')}</td>
+    <td colspan="2" ${sectionBar('Automated vs Manual Coverage', 'center')}</td>
   </tr>
   <tr>
     <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:22px 18px 22px 18px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;vertical-align:top;height:236px;">
       ${bulletList(draft)}
     </td>
     <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:24px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;text-align:center;vertical-align:middle;height:236px;">
-      ${defectsSummary(draft)}
+      ${automationCoverageBlock(draft)}
     </td>
   </tr>
   <tr>
