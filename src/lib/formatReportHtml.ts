@@ -148,6 +148,21 @@ function bulletList(draft: Draft): string {
     </table>`
 }
 
+function automationLegendItem(
+  color: string,
+  label: string,
+  value: number,
+  percent: string,
+): string {
+  return `
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="border-collapse:collapse;margin:0 auto;">
+            <tr>
+              <td width="10" height="10" bgcolor="${color}" style="width:10px;height:10px;background-color:${color};padding:0;line-height:0;font-size:0;vertical-align:middle;">&nbsp;</td>
+              <td style="padding:0 0 0 6px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};white-space:nowrap;vertical-align:middle;">${escapeHtml(label)}: ${escapeHtml(String(value))} (${escapeHtml(percent)})</td>
+            </tr>
+          </table>`
+}
+
 function automationCoverageBlock(draft: Draft): string {
   const { automated, manual } = getAutomationTotals(draft.testDesignSummaryRows)
   const total = automated + manual
@@ -173,15 +188,13 @@ function automationCoverageBlock(draft: Draft): string {
         </td>
       </tr>
       <tr>
-        <td align="center" style="padding:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};text-align:center;">
-          <span style="display:inline-block;margin:0 10px 6px 10px;">
-            <span style="display:inline-block;width:10px;height:10px;background-color:${AUTOMATED_COLOR};margin-right:6px;vertical-align:middle;"></span>
-            Automated: ${escapeHtml(String(automated))} (${escapeHtml(automatedPercent)})
-          </span>
-          <span style="display:inline-block;margin:0 10px 6px 10px;">
-            <span style="display:inline-block;width:10px;height:10px;background-color:${MANUAL_COLOR};margin-right:6px;vertical-align:middle;"></span>
-            Manual: ${escapeHtml(String(manual))} (${escapeHtml(manualPercent)})
-          </span>
+        <td align="center" style="padding:0;text-align:center;vertical-align:middle;">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="margin:0 auto;border-collapse:collapse;">
+            <tr>
+              <td align="center" style="padding:0 10px;text-align:center;vertical-align:middle;">${automationLegendItem(AUTOMATED_COLOR, 'Automated', automated, automatedPercent)}</td>
+              <td align="center" style="padding:0 10px;text-align:center;vertical-align:middle;">${automationLegendItem(MANUAL_COLOR, 'Manual', manual, manualPercent)}</td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>`
