@@ -24,8 +24,8 @@ const SCOPE_LINE_HEIGHT = '1.18'
 const RAG_GREEN = '#70AD47'
 const RAG_AMBER = '#D57132'
 const RAG_RED = '#C00000'
-const AUTOMATED_COLOR = '#2B49C8'
-const MANUAL_COLOR = '#94A3B8'
+const AUTOMATED_COLOR = RAG_GREEN
+const MANUAL_COLOR = RAG_RED
 
 function formatDateShort(isoDate: string): string {
   if (!isoDate.trim()) return ''
@@ -185,7 +185,7 @@ function automationPieChartSvg(automated: number, manual: number): string {
         ? `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${AUTOMATED_COLOR}" />`
         : `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${MANUAL_COLOR}" />`
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Automation coverage pie chart">${slices}</svg>`
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Automation coverage pie chart" style="display:block;margin:0 auto;">${slices}</svg>`
 }
 
 function automationCoverageBlock(draft: Draft): string {
@@ -200,14 +200,20 @@ function automationCoverageBlock(draft: Draft): string {
   const manualPercent = formatAutomationPercent(manual, total)
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="border-collapse:collapse;font-family:${BODY_FONT};">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="border-collapse:collapse;font-family:${BODY_FONT};margin:0 auto;">
       <tr>
-        <td align="center" style="padding:0 0 12px 0;text-align:center;">
-          ${automationPieChartSvg(automated, manual)}
+        <td align="center" style="padding:0 0 12px 0;text-align:center;vertical-align:middle;">
+          <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="margin:0 auto;border-collapse:collapse;">
+            <tr>
+              <td align="center" style="text-align:center;">
+                ${automationPieChartSvg(automated, manual)}
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
       <tr>
-        <td style="padding:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};text-align:center;">
+        <td align="center" style="padding:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};text-align:center;">
           <span style="display:inline-block;margin:0 10px 6px 10px;">
             <span style="display:inline-block;width:10px;height:10px;background-color:${AUTOMATED_COLOR};margin-right:6px;vertical-align:middle;"></span>
             Automated: ${escapeHtml(String(automated))} (${escapeHtml(automatedPercent)})
