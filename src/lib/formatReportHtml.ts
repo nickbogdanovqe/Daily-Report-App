@@ -3,6 +3,7 @@ import {
   formatAutomationPercent,
   getAutomationTotals,
 } from './automationCoverage'
+import { buildAutomationPieChartHtml } from './automationPieChartHtml'
 import { escapeHtml, resolveOverallStatus } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
@@ -147,47 +148,6 @@ function bulletList(draft: Draft): string {
     </table>`
 }
 
-function pieSlicePath(
-  cx: number,
-  cy: number,
-  radius: number,
-  startAngle: number,
-  endAngle: number,
-): string {
-  const startX = cx + radius * Math.cos(startAngle)
-  const startY = cy + radius * Math.sin(startAngle)
-  const endX = cx + radius * Math.cos(endAngle)
-  const endY = cy + radius * Math.sin(endAngle)
-  const largeArc = endAngle - startAngle > Math.PI ? 1 : 0
-
-  return `M ${cx} ${cy} L ${startX} ${startY} A ${radius} ${radius} 0 ${largeArc} 1 ${endX} ${endY} Z`
-}
-
-function automationPieChartSvg(automated: number, manual: number): string {
-  const total = automated + manual
-  const size = 140
-  const cx = size / 2
-  const cy = size / 2
-  const radius = size / 2 - 2
-
-  if (total <= 0) return ''
-
-  const automatedAngle = (automated / total) * Math.PI * 2
-  const startAngle = -Math.PI / 2
-  const automatedEnd = startAngle + automatedAngle
-  const endAngle = startAngle + Math.PI * 2
-
-  const slices =
-    automated > 0 && manual > 0
-      ? `<path d="${pieSlicePath(cx, cy, radius, startAngle, automatedEnd)}" fill="${AUTOMATED_COLOR}" />
-         <path d="${pieSlicePath(cx, cy, radius, automatedEnd, endAngle)}" fill="${MANUAL_COLOR}" />`
-      : automated > 0
-        ? `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${AUTOMATED_COLOR}" />`
-        : `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="${MANUAL_COLOR}" />`
-
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Automation coverage pie chart" style="display:block;margin:0 auto;">${slices}</svg>`
-}
-
 function automationCoverageBlock(draft: Draft): string {
   const { automated, manual } = getAutomationTotals(draft.testDesignSummaryRows)
   const total = automated + manual
@@ -206,7 +166,7 @@ function automationCoverageBlock(draft: Draft): string {
           <table cellpadding="0" cellspacing="0" border="0" role="presentation" align="center" style="margin:0 auto;border-collapse:collapse;">
             <tr>
               <td align="center" style="text-align:center;">
-                ${automationPieChartSvg(automated, manual)}
+                ${buildAutomationPieChartHtml(automated, manual)}
               </td>
             </tr>
           </table>
