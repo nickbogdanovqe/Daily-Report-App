@@ -42,7 +42,7 @@ function App() {
             <EditableList
               items={draft.highlights}
               onChange={(highlights) => updateDraft({ highlights })}
-              placeholder="e.g. Completed smoke on release candidate"
+              placeholder="e.g. Completed smoke testing on release candidate"
               addLabel="Add highlight"
             />
           </Section>
@@ -56,7 +56,7 @@ function App() {
             <EditableList
               items={draft.inScopeItems}
               onChange={(inScopeItems) => updateDraft({ inScopeItems })}
-              placeholder="e.g. Debit Card Controls (Lock/ Unlock, Card Activation, PIN Set/ Change)"
+              placeholder="e.g. User login, account settings, payment flows"
               addLabel="Add in-scope item"
             />
           </Section>
@@ -70,7 +70,7 @@ function App() {
             <EditableList
               items={draft.outOfScopeItems}
               onChange={(outOfScopeItems) => updateDraft({ outOfScopeItems })}
-              placeholder="e.g. Account Servicing for SMB Products"
+              placeholder="e.g. Legacy admin portal, third-party integrations"
               addLabel="Add out-of-scope item"
             />
           </Section>

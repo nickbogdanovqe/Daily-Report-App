@@ -4,6 +4,11 @@ import {
   getAutomationTotals,
 } from './automationCoverage'
 import { buildAutomationPieChartHtml } from './automationPieChartHtml'
+import {
+  resolveReportTitle,
+  resolveTestDesignSummaryTitle,
+  resolveTestExecutionSummaryTitle,
+} from './reportLabels'
 import { escapeHtml, resolveOverallStatus } from './reportTheme'
 
 /** Outlook-safe constants (Word rendering engine) */
@@ -222,11 +227,7 @@ function defectJiraLink(defect: Defect, jiraBaseUrl: string): string {
 }
 
 function titleText(draft: Draft): string {
-  const title = draft.reportTitle.trim()
-  if (title) return title
-  const app = draft.applicationName.trim() || 'Daily QA'
-  const date = formatDateShort(draft.reportDate)
-  return date ? `QE Status Report - ${app} - ${date}` : `QE Status Report - ${app}`
+  return resolveReportTitle(draft, formatDateShort)
 }
 
 function scopeList(items: ListItem[]): string {
@@ -313,7 +314,7 @@ function testDesignSummaryBlock(draft: Draft): string {
 
   const normalRows = rows.filter((row) => !isTotalRow(row))
   const totalRows = rows.filter(isTotalRow)
-  const title = draft.testDesignSummaryTitle.trim() || 'Test Design Summary'
+  const title = resolveTestDesignSummaryTitle(draft)
   const remarks = draft.testDesignSummaryRemarks.trim()
 
   return `
@@ -381,7 +382,7 @@ function testExecutionSummaryBlock(draft: Draft): string {
 
   const normalRows = rows.filter((row) => !isTotalRow(row))
   const totalRows = rows.filter(isTotalRow)
-  const title = draft.testExecutionSummaryTitle.trim() || 'Test Execution Summary'
+  const title = resolveTestExecutionSummaryTitle(draft)
   const remarks = draft.testExecutionSummaryRemarks.trim()
 
   return `

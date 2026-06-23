@@ -3,6 +3,10 @@ import type {
   TestDesignSummaryRow,
   TestExecutionSummaryRow,
 } from '../types'
+import {
+  resolveTestDesignSummaryTitle,
+  resolveTestExecutionSummaryTitle,
+} from '../lib/reportLabels'
 import { createId } from '../lib/storage'
 
 interface TestSummaryTablesProps {
@@ -105,6 +109,9 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
     })
   }
 
+  const designTitlePlaceholder = resolveTestDesignSummaryTitle(draft)
+  const executionTitlePlaceholder = resolveTestExecutionSummaryTitle(draft)
+
   return (
     <div className="space-y-5">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -130,8 +137,12 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
               type="text"
               value={draft.testDesignSummaryTitle}
               onChange={(e) => onChange({ testDesignSummaryTitle: e.target.value })}
+              placeholder={designTitlePlaceholder}
               className={inputClass}
             />
+            <span className="mt-1 block text-xs text-slate-500">
+              Leave blank to use the application name from report details.
+            </span>
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -141,6 +152,7 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
               type="text"
               value={draft.testDesignSummaryRemarks}
               onChange={(e) => onChange({ testDesignSummaryRemarks: e.target.value })}
+              placeholder="Optional remarks for the design summary table"
               className={inputClass}
             />
           </label>
@@ -269,8 +281,12 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
               type="text"
               value={draft.testExecutionSummaryTitle}
               onChange={(e) => onChange({ testExecutionSummaryTitle: e.target.value })}
+              placeholder={executionTitlePlaceholder}
               className={inputClass}
             />
+            <span className="mt-1 block text-xs text-slate-500">
+              Leave blank to use the application name from report details.
+            </span>
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -280,6 +296,7 @@ export function TestSummaryTables({ draft, onChange }: TestSummaryTablesProps) {
               type="text"
               value={draft.testExecutionSummaryRemarks}
               onChange={(e) => onChange({ testExecutionSummaryRemarks: e.target.value })}
+              placeholder="Optional remarks for the execution summary table"
               className={inputClass}
             />
           </label>

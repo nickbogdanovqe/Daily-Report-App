@@ -53,7 +53,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
             type="text"
             value={draft.reportTitle}
             onChange={(e) => updateText('reportTitle', e.target.value)}
-            placeholder="QE Status Report - Application - MM/DD"
+            placeholder="Optional — defaults to application name and report date"
             className={inputClass}
           />
         </label>
@@ -63,7 +63,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
             type="text"
             value={draft.applicationName}
             onChange={(e) => updateText('applicationName', e.target.value)}
-            placeholder="Application, microservices, and service scope"
+            placeholder="Your application or service name"
             className={inputClass}
           />
         </label>
@@ -137,7 +137,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
             type="text"
             value={draft.testingType}
             onChange={(e) => updateText('testingType', e.target.value)}
-            placeholder="Functional, Integration, E2E and Regression"
+            placeholder="e.g. Functional, Integration, E2E, Regression"
             className={inputClass}
           />
         </label>
@@ -248,7 +248,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
             type="text"
             value={draft.testArtifacts}
             onChange={(e) => updateText('testArtifacts', e.target.value)}
-            placeholder="Not Available Yet."
+            placeholder="Optional link or N/A"
             className={inputClass}
           />
         </label>
@@ -258,7 +258,7 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
             type="text"
             value={draft.environmentDowntime}
             onChange={(e) => updateText('environmentDowntime', e.target.value)}
-            placeholder="NA"
+            placeholder="Optional tracker link or N/A"
             className={inputClass}
           />
         </label>

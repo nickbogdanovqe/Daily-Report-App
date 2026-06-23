@@ -52,7 +52,7 @@ interface SectionProps {
   storageKey: string
 }
 
-const SECTION_STATE_STORAGE_PREFIX = 'aurora-daily-report-section-open-v1'
+const SECTION_STATE_STORAGE_PREFIX = 'daily-report-section-open-v1'
 
 function loadSectionOpenState(storageKey: string, defaultOpen: boolean): boolean {
   try {

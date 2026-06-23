@@ -23,7 +23,7 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
     {
       id: createId(),
       functionality: 'Functional Testing',
-      totalPlanned: '43',
+      totalPlanned: '0',
       totalCompleted: '0',
       totalInProgress: '0',
       totalNotStarted: '0',
@@ -56,8 +56,8 @@ function createDefaultDesignRows(): TestDesignSummaryRow[] {
     {
       id: createId(),
       functionality: 'Regression Testing',
-      totalPlanned: '200+',
-      totalCompleted: '200+',
+      totalPlanned: '0',
+      totalCompleted: '0',
       totalInProgress: '0',
       totalNotStarted: '0',
       totalCompletedToday: '0',
@@ -86,7 +86,7 @@ function createDefaultExecutionRows(): TestExecutionSummaryRow[] {
       totalPlanned: '0',
       totalExecuted: '0',
       totalPassed: '0',
-      totalFailed: '31',
+      totalFailed: '0',
       totalNa: '0',
       totalNotComplete: '0',
       totalBlocked: '0',
@@ -147,11 +147,11 @@ export function createEmptyDraft(): Draft {
   return {
     reportDate: todayIsoDate(),
     reportTitle: '',
-    applicationName: 'Aurora Mobile',
+    applicationName: '',
     projectQaStartDate: '',
     projectQaSignOffDate: '',
     plannedGoLiveDate: '',
-    testingType: 'Functional, Integration, E2E and Regression',
+    testingType: '',
     testEnvironment: '',
     qeOwner: '',
     overallStatus: 'Green',
@@ -160,19 +160,18 @@ export function createEmptyDraft(): Draft {
     ragReason: '',
     trendReason: '',
     testEvidencePath: '',
-    testArtifacts: 'Not Available Yet.',
-    environmentDowntime: 'NA',
+    testArtifacts: '',
+    environmentDowntime: '',
     inScopeConfirmedDate: '',
     inScopeItems: [],
     outOfScopeItems: [],
     showTestDesignSummary: false,
-    testDesignSummaryTitle: 'Test Design Summary - Project Money Movement',
-    testDesignSummaryRemarks:
-      'Test cases will be added based on integration issues are resolved and test data availability',
+    testDesignSummaryTitle: '',
+    testDesignSummaryRemarks: '',
     testDesignSummaryRows: createDefaultDesignRows(),
     showTestExecutionSummary: false,
-    testExecutionSummaryTitle: 'Test Execution Summary - Money Movement',
-    testExecutionSummaryRemarks: 'Execution status will be updated after 05/26',
+    testExecutionSummaryTitle: '',
+    testExecutionSummaryRemarks: '',
     testExecutionSummaryRows: createDefaultExecutionRows(),
     jiraBaseUrl: '',
     summary: '',
@@ -255,6 +254,18 @@ function normalizeExecutionRows(
   }))
 }
 
+function normalizeLegacyText(value: unknown, legacyValues: readonly string[]): string {
+  if (typeof value !== 'string') return ''
+  return legacyValues.includes(value) ? '' : value
+}
+
+const LEGACY_DESIGN_TITLES = ['Test Design Summary - Project Money Movement'] as const
+const LEGACY_EXECUTION_TITLES = ['Test Execution Summary - Money Movement'] as const
+const LEGACY_DESIGN_REMARKS = [
+  'Test cases will be added based on integration issues are resolved and test data availability',
+] as const
+const LEGACY_EXECUTION_REMARKS = ['Execution status will be updated after 05/26'] as const
+
 function normalizeDraft(parsed: StoredDraft): Draft {
   const { blockers: _legacyBlockers, tasks: _legacyTasks, ...storedDraft } =
     parsed as StoredDraft & {
@@ -265,6 +276,22 @@ function normalizeDraft(parsed: StoredDraft): Draft {
   return {
     ...createEmptyDraft(),
     ...storedDraft,
+    testDesignSummaryTitle: normalizeLegacyText(
+      parsed.testDesignSummaryTitle,
+      LEGACY_DESIGN_TITLES,
+    ),
+    testExecutionSummaryTitle: normalizeLegacyText(
+      parsed.testExecutionSummaryTitle,
+      LEGACY_EXECUTION_TITLES,
+    ),
+    testDesignSummaryRemarks: normalizeLegacyText(
+      parsed.testDesignSummaryRemarks,
+      LEGACY_DESIGN_REMARKS,
+    ),
+    testExecutionSummaryRemarks: normalizeLegacyText(
+      parsed.testExecutionSummaryRemarks,
+      LEGACY_EXECUTION_REMARKS,
+    ),
     overallStatus: normalizeRagStatus(parsed.overallStatus),
     anticipatedTrend: normalizeRagStatus(parsed.anticipatedTrend ?? parsed.overallStatus),
     highlights: normalizeListItems(parsed.highlights as StoredListItem[] | undefined),

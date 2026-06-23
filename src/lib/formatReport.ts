@@ -1,5 +1,10 @@
 import type { Draft, ListItem } from '../types'
 import { formatAutomationCoverageText, getAutomationTotals } from './automationCoverage'
+import {
+  resolveReportTitle,
+  resolveTestDesignSummaryTitle,
+  resolveTestExecutionSummaryTitle,
+} from './reportLabels'
 import { formatOverallLabel } from './reportTheme'
 
 function formatDateShort(isoDate: string): string {
@@ -40,11 +45,7 @@ function formatJiraUrl(jiraBaseUrl: string, jiraId: string): string {
 }
 
 function titleText(draft: Draft): string {
-  const title = draft.reportTitle.trim()
-  if (title) return title
-  const app = draft.applicationName.trim() || 'Daily QA'
-  const date = formatDateShort(draft.reportDate)
-  return date ? `QE Status Report - ${app} - ${date}` : `QE Status Report - ${app}`
+  return resolveReportTitle(draft, formatDateShort)
 }
 
 function formatBulletList(
@@ -95,7 +96,7 @@ function appendScopeLines(draft: Draft, lines: string[]): void {
 
 function appendOptionalSummaryTables(draft: Draft, lines: string[]): void {
   if (draft.showTestDesignSummary && draft.testDesignSummaryRows.length > 0) {
-    lines.push('', 'Test Design Summary:', draft.testDesignSummaryTitle.trim())
+    lines.push('', 'Test Design Summary:', resolveTestDesignSummaryTitle(draft))
     for (const row of draft.testDesignSummaryRows.filter((r) => r.functionality.trim())) {
       lines.push(
         `${row.functionality.trim()}: planned ${row.totalPlanned || '0'}, completed ${row.totalCompleted || '0'}, in progress ${row.totalInProgress || '0'}, not started ${row.totalNotStarted || '0'}, completed today ${row.totalCompletedToday || '0'}`,
@@ -107,7 +108,7 @@ function appendOptionalSummaryTables(draft: Draft, lines: string[]): void {
   }
 
   if (draft.showTestExecutionSummary && draft.testExecutionSummaryRows.length > 0) {
-    lines.push('', 'Test Execution Summary:', draft.testExecutionSummaryTitle.trim())
+    lines.push('', 'Test Execution Summary:', resolveTestExecutionSummaryTitle(draft))
     for (const row of draft.testExecutionSummaryRows.filter((r) => r.functionality.trim())) {
       lines.push(
         `${row.functionality.trim()}: planned ${row.totalPlanned || '0'}, executed ${row.totalExecuted || '0'}, passed ${row.totalPassed || '0'}, failed ${row.totalFailed || '0'}, NA ${row.totalNa || '0'}, not complete ${row.totalNotComplete || '0'}, blocked ${row.totalBlocked || '0'}, no run ${row.totalNoRun || '0'}`,
