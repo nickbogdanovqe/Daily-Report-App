@@ -5,6 +5,7 @@ import {
   isTotalRow,
 } from './automationCoverage'
 import { buildAutomationPieChartHtml } from './automationPieChartHtml'
+import { formatJiraUrl } from './jiraUrl'
 import {
   resolveReportTitle,
   resolveTestDesignSummaryTitle,
@@ -64,13 +65,7 @@ function normalizeLink(link: string): string {
 }
 
 function jiraHref(jiraBaseUrl: string, jiraId: string): string {
-  const base = normalizeLink(jiraBaseUrl)
-  const id = jiraId.trim().toUpperCase()
-  if (!base || !id) return ''
-  const cleanBase = base.replace(/\/$/, '')
-  return cleanBase.endsWith('/browse')
-    ? `${cleanBase}/${encodeURIComponent(id)}`
-    : `${cleanBase}/browse/${encodeURIComponent(id)}`
+  return formatJiraUrl(jiraBaseUrl, jiraId)
 }
 
 function paragraphText(text: string): string {
@@ -135,8 +130,6 @@ function bulletList(draft: Draft): string {
     .filter(({ item }) => item.text.trim())
 
   if (rows.length === 0) {
-    const summary = draft.summary.trim()
-    if (summary) return paragraphText(summary)
     return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};font-style:italic;">No key highlights listed.</p>`
   }
 
@@ -501,7 +494,7 @@ ${summaryLabel('Defects Summary:')}
 }
 
 export function formatReportBody(draft: Draft): string {
-  const ragReason = draft.ragReason.trim() || draft.summary.trim()
+  const ragReason = draft.ragReason.trim()
   const trendReason = draft.trendReason.trim()
   const ragFill = statusFill(draft)
   const anticipatedFill = ragColor(draft.anticipatedTrend)

@@ -78,7 +78,6 @@ export interface Draft {
   testExecutionSummaryRemarks: string
   testExecutionSummaryRows: TestExecutionSummaryRow[]
   jiraBaseUrl: string
-  summary: string
   highlights: ListItem[]
   defects: Defect[]
 }

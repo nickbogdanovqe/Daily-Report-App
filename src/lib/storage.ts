@@ -1,3 +1,10 @@
+import {
+  ARCHIVE_KEY,
+  ARCHIVE_RETENTION_DAYS,
+  addDays,
+  hasReportContent,
+  type ReportArchive,
+} from './reportArchive'
 import type {
   Defect,
   Draft,
@@ -174,7 +181,6 @@ export function createEmptyDraft(): Draft {
     testExecutionSummaryRemarks: '',
     testExecutionSummaryRows: createDefaultExecutionRows(),
     jiraBaseUrl: '',
-    summary: '',
     highlights: [],
     defects: [],
   }
@@ -184,7 +190,7 @@ type StoredDefect = Partial<Defect> & { severity?: unknown }
 type StoredListItem = Partial<ListItem>
 type StoredDesignRow = Partial<TestDesignSummaryRow>
 type StoredExecutionRow = Partial<TestExecutionSummaryRow>
-type StoredDraft = Partial<Omit<Draft, 'overallStatus' | 'anticipatedTrend'>> & {
+export type StoredDraft = Partial<Omit<Draft, 'overallStatus' | 'anticipatedTrend'>> & {
   overallStatus?: unknown
   anticipatedTrend?: unknown
 }
@@ -266,16 +272,26 @@ const LEGACY_DESIGN_REMARKS = [
 ] as const
 const LEGACY_EXECUTION_REMARKS = ['Execution status will be updated after 05/26'] as const
 
-function normalizeDraft(parsed: StoredDraft): Draft {
+function migrateLegacySummary(parsed: StoredDraft): string {
+  const ragReason = typeof parsed.ragReason === 'string' ? parsed.ragReason.trim() : ''
+  if (ragReason) return ragReason
+
+  const summary = (parsed as StoredDraft & { summary?: unknown }).summary
+  return typeof summary === 'string' ? summary.trim() : ''
+}
+
+export function normalizeDraft(parsed: StoredDraft): Draft {
   const { blockers: _legacyBlockers, tasks: _legacyTasks, ...storedDraft } =
     parsed as StoredDraft & {
       blockers?: unknown
       tasks?: unknown
+      summary?: unknown
     }
 
   return {
     ...createEmptyDraft(),
     ...storedDraft,
+    ragReason: migrateLegacySummary(parsed),
     testDesignSummaryTitle: normalizeLegacyText(
       parsed.testDesignSummaryTitle,
       LEGACY_DESIGN_TITLES,
@@ -356,21 +372,17 @@ export function initializeSessionDraft(): SessionInit {
     lastActive === null && draft.reportDate < today
 
   if (isNewDay || isFirstVisitWithStaleDraft) {
-    const hasContent =
-      draft.summary.trim() ||
-      draft.highlights.some((h) => h.text.trim()) ||
-      draft.inScopeItems.some((i) => i.text.trim()) ||
-      draft.outOfScopeItems.some((i) => i.text.trim()) ||
-      draft.showTestDesignSummary ||
-      draft.showTestExecutionSummary ||
-      draft.defects.some((d) => d.title.trim())
-
-    if (hasContent || isNewDay) {
+    if (hasReportContent(draft)) {
+      archiveDraft(draft)
+      rolledFromDate = lastActive ?? draft.reportDate
+    } else if (isNewDay) {
       rolledFromDate = lastActive ?? draft.reportDate
     }
 
     draft = carryDraftForward(draft, today)
     saveDraft(draft)
+  } else if (hasReportContent(draft)) {
+    archiveDraft(draft)
   }
 
   saveLastActiveDate(today)
@@ -381,3 +393,57 @@ export function initializeSessionDraft(): SessionInit {
 export function clearDraft(): void {
   localStorage.removeItem(STORAGE_KEY)
 }
+
+function pruneArchive(archive: ReportArchive, today: string): ReportArchive {
+  const keepFrom = addDays(today, -(ARCHIVE_RETENTION_DAYS - 1))
+  const pruned: ReportArchive = {}
+
+  for (const [date, draft] of Object.entries(archive)) {
+    if (date >= keepFrom && date <= today) {
+      pruned[date] = draft
+    }
+  }
+
+  return pruned
+}
+
+export function loadArchive(): ReportArchive {
+  try {
+    const raw = localStorage.getItem(ARCHIVE_KEY)
+    if (!raw) return {}
+
+    const parsed = JSON.parse(raw) as Record<string, StoredDraft>
+    const archive: ReportArchive = {}
+
+    for (const [date, storedDraft] of Object.entries(parsed)) {
+      archive[date] = normalizeDraft({ ...storedDraft, reportDate: date })
+    }
+
+    return archive
+  } catch {
+    return {}
+  }
+}
+
+function saveArchive(archive: ReportArchive): void {
+  localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive))
+}
+
+export function getArchivedDraft(date: string): Draft | null {
+  return loadArchive()[date] ?? null
+}
+
+export function hasArchivedReport(date: string): boolean {
+  return getArchivedDraft(date) !== null
+}
+
+export function archiveDraft(draft: Draft): void {
+  const date = draft.reportDate.trim()
+  if (!date || !hasReportContent(draft)) return
+
+  const archive = pruneArchive(loadArchive(), todayIsoDate())
+  archive[date] = { ...draft, reportDate: date }
+  saveArchive(archive)
+}
+
+export { ARCHIVE_RETENTION_DAYS, hasReportContent, listRecentDates } from './reportArchive'

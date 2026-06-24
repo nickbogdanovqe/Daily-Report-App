@@ -1,5 +1,6 @@
 import type { Draft, ListItem } from '../types'
 import { formatAutomationCoverageText, getAutomationTotals } from './automationCoverage'
+import { formatJiraUrl } from './jiraUrl'
 import {
   resolveReportTitle,
   resolveTestDesignSummaryTitle,
@@ -26,22 +27,6 @@ function formatDateMonthDay(isoDate: string): string {
     month: '2-digit',
     day: '2-digit',
   })
-}
-
-function normalizeJiraBaseUrl(jiraBaseUrl: string): string {
-  const trimmed = jiraBaseUrl.trim()
-  if (!trimmed) return ''
-  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
-  return withProtocol.replace(/\/$/, '')
-}
-
-function formatJiraUrl(jiraBaseUrl: string, jiraId: string): string {
-  const base = normalizeJiraBaseUrl(jiraBaseUrl)
-  const id = jiraId.trim().toUpperCase()
-  if (!base || !id) return ''
-  return base.endsWith('/browse')
-    ? `${base}/${encodeURIComponent(id)}`
-    : `${base}/browse/${encodeURIComponent(id)}`
 }
 
 function titleText(draft: Draft): string {
@@ -143,7 +128,7 @@ function appendDefectsSummary(draft: Draft, lines: string[]): void {
 
 export function formatReport(draft: Draft): string {
   const overall = formatOverallLabel(draft)
-  const ragReason = draft.ragReason.trim() || draft.summary.trim() || 'N/A'
+  const ragReason = draft.ragReason.trim() || 'N/A'
   const trend = draft.anticipatedTrend.trim() || overall
   const trendReason = draft.trendReason.trim() || 'N/A'
 

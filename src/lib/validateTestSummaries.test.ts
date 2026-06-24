@@ -81,9 +81,20 @@ describe('validateTestExecutionSummary', () => {
     const issues = validateTestExecutionSummary(rows)
     const messages = issues.map((issue) => issue.message)
 
-    expect(messages.some((message) => message.includes('Passed (16) exceeds Executed (10)'))).toBe(
-      true,
-    )
+    expect(
+      messages.some((message) =>
+        message.includes(
+          'Total Executed (10) should equal Passed + Failed + NA (16)',
+        ),
+      ),
+    ).toBe(true)
+    expect(
+      messages.some((message) =>
+        message.includes(
+          'Executed + Not complete + Blocked + No run = 114, but Planned is 120',
+        ),
+      ),
+    ).toBe(true)
     expect(
       messages.some((message) =>
         message.includes("Total Not complete (99) doesn't match sum of rows (89)"),
@@ -94,6 +105,37 @@ describe('validateTestExecutionSummary', () => {
         message.includes("Total No run (5) doesn't match sum of rows (15)"),
       ),
     ).toBe(true)
+  })
+
+  it('passes for Project OAO functional testing row', () => {
+    const rows = [
+      executionRow({
+        id: 'functional',
+        functionality: 'Functional Testing',
+        totalPlanned: '172',
+        totalExecuted: '41',
+        totalPassed: '36',
+        totalFailed: '5',
+        totalNa: '0',
+        totalNotComplete: '0',
+        totalBlocked: '28',
+        totalNoRun: '103',
+      }),
+      executionRow({
+        id: 'total',
+        functionality: 'Total',
+        totalPlanned: '172',
+        totalExecuted: '41',
+        totalPassed: '36',
+        totalFailed: '5',
+        totalNa: '0',
+        totalNotComplete: '0',
+        totalBlocked: '28',
+        totalNoRun: '103',
+      }),
+    ]
+
+    expect(validateTestExecutionSummary(rows)).toEqual([])
   })
 
   it('passes when row partition and total rollup are balanced', () => {

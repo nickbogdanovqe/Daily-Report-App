@@ -1,14 +1,23 @@
 import { useState } from 'react'
 import { copyReportToClipboard } from '../lib/clipboard'
+import { formatDateShort } from '../lib/formatDate'
 import type { Draft } from '../types'
 
 interface ToolbarProps {
   draft: Draft
   lastSaved: Date | null
   onReset: () => void
+  isViewingToday: boolean
+  viewingDate: string
 }
 
-export function Toolbar({ draft, lastSaved, onReset }: ToolbarProps) {
+export function Toolbar({
+  draft,
+  lastSaved,
+  onReset,
+  isViewingToday,
+  viewingDate,
+}: ToolbarProps) {
   const [copyMessage, setCopyMessage] = useState<string | null>(null)
 
   const handleCopy = async () => {
@@ -31,9 +40,11 @@ export function Toolbar({ draft, lastSaved, onReset }: ToolbarProps) {
     }
   }
 
-  const savedLabel = lastSaved
-    ? `Saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
-    : 'Not saved yet'
+  const savedLabel = isViewingToday
+    ? lastSaved
+      ? `Saved ${lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+      : 'Not saved yet'
+    : `Viewing ${formatDateShort(viewingDate)} (read-only)`
 
   return (
     <div className="sticky bottom-0 z-10 border-t border-slate-200/80 bg-white/90 px-4 py-3 shadow-[0_-4px_24px_rgba(15,23,42,0.06)] backdrop-blur-md sm:px-6">
@@ -51,7 +62,8 @@ export function Toolbar({ draft, lastSaved, onReset }: ToolbarProps) {
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+            disabled={!isViewingToday}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Reset draft
           </button>

@@ -205,37 +205,27 @@ export function ReportMeta({ draft, onChange }: ReportMetaProps) {
         </label>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-1">
-        <label className="block">
-          <FieldLabel>Executive Summary</FieldLabel>
-          <textarea
-            value={draft.summary}
-            onChange={(e) => updateText('summary', e.target.value)}
-            rows={3}
-            placeholder="Optional summary"
-            className={`${inputClass} resize-y leading-relaxed`}
-          />
-        </label>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <FieldLabel>Test Evidence / XRAY Path</FieldLabel>
-          <input
-            type="url"
-            value={draft.testEvidencePath}
-            onChange={(e) => updateText('testEvidencePath', e.target.value)}
-            placeholder="https://your-company.atlassian.net/browse/KEY-123"
-            className={inputClass}
-          />
-        </label>
-        <label className="block">
+        <label className="block sm:col-span-2">
           <FieldLabel>JIRA base URL</FieldLabel>
           <input
             type="url"
             value={draft.jiraBaseUrl}
             onChange={(e) => updateText('jiraBaseUrl', e.target.value)}
             placeholder="https://your-company.atlassian.net/browse"
+            className={inputClass}
+          />
+          <span className="mt-1 block text-xs text-slate-500">
+            Builds browse links from JIRA IDs on defects and highlights (e.g. DIGENG-12345).
+          </span>
+        </label>
+        <label className="block">
+          <FieldLabel>Test Evidence / XRAY Path</FieldLabel>
+          <input
+            type="url"
+            value={draft.testEvidencePath}
+            onChange={(e) => updateText('testEvidencePath', e.target.value)}
+            placeholder="https://your-company.atlassian.net/projects/..."
             className={inputClass}
           />
         </label>

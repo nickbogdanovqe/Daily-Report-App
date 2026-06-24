@@ -262,8 +262,20 @@ export function validateTestExecutionSummary(
     }
 
     const label = rowLabel(row.functionality)
-    const statusSum = passed + failed + na + notComplete + blocked + noRun
     const outcomes = passed + failed + na
+    const statusSum = outcomes + notComplete + blocked + noRun
+    const executedBucketSum = executed + notComplete + blocked + noRun
+
+    if (executed !== outcomes) {
+      issues.push({
+        id: nextIssueId(),
+        severity: 'error',
+        table: 'execution',
+        rowId: row.id,
+        field: 'totalExecuted',
+        message: `${label}: Total Executed (${executed}) should equal Passed + Failed + NA (${outcomes})`,
+      })
+    }
 
     if (planned !== statusSum) {
       issues.push({
@@ -272,29 +284,16 @@ export function validateTestExecutionSummary(
         table: 'execution',
         rowId: row.id,
         field: 'totalPlanned',
-        message: `${label}: status columns sum to ${statusSum}, but Planned is ${planned} (off by ${planned - statusSum})`,
+        message: `${label}: Passed + Failed + NA + Not complete + Blocked + No run = ${statusSum}, but Planned is ${planned} (off by ${planned - statusSum})`,
       })
-    }
-
-    if (passed > executed) {
+    } else if (planned !== executedBucketSum) {
       issues.push({
         id: nextIssueId(),
         severity: 'error',
         table: 'execution',
         rowId: row.id,
-        field: 'totalPassed',
-        message: `${label}: Passed (${passed}) exceeds Executed (${executed})`,
-      })
-    }
-
-    if (outcomes > executed) {
-      issues.push({
-        id: nextIssueId(),
-        severity: 'error',
-        table: 'execution',
-        rowId: row.id,
-        field: 'totalExecuted',
-        message: `${label}: Passed + Failed + NA (${outcomes}) exceeds Executed (${executed})`,
+        field: 'totalPlanned',
+        message: `${label}: Executed + Not complete + Blocked + No run = ${executedBucketSum}, but Planned is ${planned} (off by ${planned - executedBucketSum})`,
       })
     }
   }

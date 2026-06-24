@@ -4,13 +4,19 @@ import type { Draft } from '../types'
 
 interface ReportPreviewProps {
   draft: Draft
+  isReadOnly?: boolean
+  hasReport?: boolean
 }
 
 // The report tables are authored at a fixed 980px width, so the page never
 // needs to be wider than this.
 const REPORT_WIDTH = 980
 
-export function ReportPreview({ draft }: ReportPreviewProps) {
+export function ReportPreview({
+  draft,
+  isReadOnly = false,
+  hasReport = true,
+}: ReportPreviewProps) {
   const html = formatReportBody(draft)
   const viewportRef = useRef<HTMLDivElement>(null)
   const pageRef = useRef<HTMLDivElement>(null)
@@ -66,13 +72,23 @@ export function ReportPreview({ draft }: ReportPreviewProps) {
             <div>
               <h2 className="text-sm font-semibold text-slate-950">QE status report preview</h2>
               <p className="text-xs text-slate-500">
-                Spreadsheet-style layout for formatted paste
+                {isReadOnly
+                  ? hasReport
+                    ? 'Read-only snapshot — copy still works'
+                    : 'No saved report for this date'
+                  : 'Spreadsheet-style layout for formatted paste'}
               </p>
             </div>
           </div>
           <div>
-            <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-              Rich copy enabled
+            <span
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                isReadOnly
+                  ? 'border-amber-200 bg-amber-50 text-amber-800'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+              }`}
+            >
+              {isReadOnly ? 'Read-only view' : 'Rich copy enabled'}
             </span>
           </div>
         </div>

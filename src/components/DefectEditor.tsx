@@ -17,20 +17,24 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import type { Defect, DefectStatus } from '../types'
 import { DEFECT_STATUSES } from '../types'
+import { formatJiraUrl, hasJiraBaseUrl } from '../lib/jiraUrl'
 import { createId } from '../lib/storage'
 import { statusColors } from '../lib/reportTheme'
 
 interface DefectEditorProps {
   defects: Defect[]
   onChange: (defects: Defect[]) => void
+  jiraBaseUrl: string
 }
 
 function SortableDefectCard({
   defect,
+  jiraBaseUrl,
   onUpdate,
   onRemove,
 }: {
   defect: Defect
+  jiraBaseUrl: string
   onUpdate: (patch: Partial<Defect>) => void
   onRemove: () => void
 }) {
@@ -43,6 +47,8 @@ function SortableDefectCard({
   }
 
   const st = statusColors(defect.status)
+  const autoLink = formatJiraUrl(jiraBaseUrl, defect.jiraId ?? '')
+  const useAutoLink = hasJiraBaseUrl(jiraBaseUrl)
 
   return (
     <div
@@ -118,16 +124,36 @@ function SortableDefectCard({
             className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-2 py-2 text-sm font-semibold uppercase text-slate-800 shadow-inner shadow-slate-900/5 placeholder:font-medium placeholder:normal-case placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </label>
-        <label className="col-span-2 block sm:col-span-1">
-          <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
-          <input
-            type="url"
-            value={defect.link}
-            onChange={(e) => onUpdate({ link: e.target.value })}
-            placeholder="https://example.com/defect/123"
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
-        </label>
+        {useAutoLink ? (
+          <div className="col-span-2 block sm:col-span-1">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
+            {autoLink ? (
+              <a
+                href={autoLink}
+                target="_blank"
+                rel="noreferrer"
+                className="block truncate rounded-xl border border-slate-200 bg-slate-50/50 px-2 py-2 text-sm text-blue-700 underline"
+              >
+                {autoLink}
+              </a>
+            ) : (
+              <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/50 px-2 py-2 text-xs text-slate-500">
+                Enter a JIRA ID to generate the browse link.
+              </p>
+            )}
+          </div>
+        ) : (
+          <label className="col-span-2 block sm:col-span-1">
+            <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
+            <input
+              type="url"
+              value={defect.link}
+              onChange={(e) => onUpdate({ link: e.target.value })}
+              placeholder="https://example.com/browse/ABC-123"
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            />
+          </label>
+        )}
         <label className="block col-span-2 sm:col-span-3">
           <span className="mb-1 block text-xs font-medium text-slate-500">Note</span>
           <input
@@ -143,7 +169,7 @@ function SortableDefectCard({
   )
 }
 
-export function DefectEditor({ defects, onChange }: DefectEditorProps) {
+export function DefectEditor({ defects, onChange, jiraBaseUrl }: DefectEditorProps) {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -182,6 +208,11 @@ export function DefectEditor({ defects, onChange }: DefectEditorProps) {
 
   return (
     <div className="space-y-3">
+      {!hasJiraBaseUrl(jiraBaseUrl) && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
+          Set JIRA base URL in report details to auto-build browse links from ticket IDs.
+        </p>
+      )}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={defects.map((d) => d.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
@@ -189,6 +220,7 @@ export function DefectEditor({ defects, onChange }: DefectEditorProps) {
               <SortableDefectCard
                 key={defect.id}
                 defect={defect}
+                jiraBaseUrl={jiraBaseUrl}
                 onUpdate={(patch) => updateDefect(defect.id, patch)}
                 onRemove={() => removeDefect(defect.id)}
               />
