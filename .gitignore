@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Jira export produced by `npm run sync:jira`
+jira-defects.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

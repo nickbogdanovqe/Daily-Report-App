@@ -5,7 +5,9 @@ import {
   isTotalRow,
 } from './automationCoverage'
 import { buildAutomationPieChartHtml } from './automationPieChartHtml'
+import { groupDefects, hasDefectContent } from './defectGroups'
 import { formatJiraUrl } from './jiraUrl'
+import { isMarkdownEmpty, renderMarkdownHtml } from './markdownLite'
 import {
   resolveReportTitle,
   resolveTestDesignSummaryTitle,
@@ -111,40 +113,18 @@ function sectionBar(title: string, align: 'left' | 'center' = 'left'): string {
   return `style="background-color:${BLUE};border:1px solid ${GRID};padding:3px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:${align};vertical-align:middle;">${escapeHtml(title)}`
 }
 
-function jiraBadge(item: ListItem, jiraBaseUrl: string): string {
-  const jiraId = (item.jiraId ?? '').trim().toUpperCase()
-  if (!jiraId) return ''
-
-  const href = jiraHref(jiraBaseUrl, jiraId)
-  const label = escapeHtml(jiraId)
-  if (!href) {
-    return `${label} - `
-  }
-
-  return `<a href="${escapeHtml(href)}" style="font-family:${BODY_FONT};font-weight:400;color:#2B49C8;text-decoration:underline;">${label}</a> - `
-}
-
-function bulletList(draft: Draft): string {
-  const rows = draft.highlights
-    .map((item) => ({ item, prefix: '' }))
-    .filter(({ item }) => item.text.trim())
-
-  if (rows.length === 0) {
+function highlightsBlock(draft: Draft): string {
+  if (isMarkdownEmpty(draft.highlightsMarkdown)) {
     return `<p style="margin:0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:${BODY_COLOR};font-style:italic;">No key highlights listed.</p>`
   }
 
-  return `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="margin:0;border-collapse:collapse;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;">
-      ${rows
-        .map(
-          ({ item, prefix }) =>
-            `<tr>
-              <td width="18" valign="top" style="width:18px;padding:0 6px 8px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;text-align:center;">&#8226;</td>
-              <td valign="top" style="padding:0 0 8px 0;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.34;color:#000000;">${jiraBadge(item, draft.jiraBaseUrl)}${escapeHtml(prefix)}${escapeHtml(item.text.trim())}</td>
-            </tr>`,
-        )
-        .join('')}
-    </table>`
+  return renderMarkdownHtml(draft.highlightsMarkdown, draft.jiraBaseUrl, {
+    fontFamily: BODY_FONT,
+    fontSize: BODY_FONT_SIZE,
+    lineHeight: '1.34',
+    color: '#000000',
+    linkColor: '#2B49C8',
+  })
 }
 
 function automationLegendItem(
@@ -448,14 +428,42 @@ function optionalSummaryTablesBlock(draft: Draft): string {
   return `${testDesignSummaryBlock(draft)}${testExecutionSummaryBlock(draft)}`
 }
 
+function defectGroupRow(label: string): string {
+  return `
+  <tr>
+    <td colspan="4" style="background-color:${LABEL_BG};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.15;font-weight:700;color:#000000;text-align:left;vertical-align:middle;">${escapeHtml(label)}</td>
+  </tr>`
+}
+
+function defectRow(defect: Defect, jiraBaseUrl: string): string {
+  return `
+  <tr>
+    <td ${reportValueCell(defect.status)}</td>
+    <td style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${defectJiraLink(defect, jiraBaseUrl)}</td>
+    <td ${reportValueCell(defect.title.trim(), 'text-align:left;')}</td>
+    <td ${reportValueCell(defect.note.trim(), 'text-align:left;')}</td>
+  </tr>`
+}
+
+function defectRows(draft: Draft, defects: Defect[]): string {
+  const { production, nonProduction } = groupDefects(defects)
+  if (production.length === 0) {
+    return defects.map((defect) => defectRow(defect, draft.jiraBaseUrl)).join('')
+  }
+
+  const productionRows = production.map((defect) => defectRow(defect, draft.jiraBaseUrl)).join('')
+  if (nonProduction.length === 0) {
+    return `${defectGroupRow('Production')}${productionRows}`
+  }
+
+  const nonProductionRows = nonProduction
+    .map((defect) => defectRow(defect, draft.jiraBaseUrl))
+    .join('')
+  return `${defectGroupRow('Production')}${productionRows}${defectGroupRow('Non-Production')}${nonProductionRows}`
+}
+
 function defectsSummaryTableBlock(draft: Draft): string {
-  const defects = draft.defects.filter(
-    (defect) =>
-      defect.title.trim() ||
-      (defect.jiraId ?? '').trim() ||
-      defect.note.trim() ||
-      defect.link.trim(),
-  )
+  const defects = draft.defects.filter(hasDefectContent)
 
   if (defects.length === 0) return ''
 
@@ -479,17 +487,7 @@ ${summaryLabel('Defects Summary:')}
     <td ${reportHeaderCell('Description/ Name')}</td>
     <td ${reportHeaderCell('Notes')}</td>
   </tr>
-  ${defects
-    .map(
-      (defect) => `
-  <tr>
-    <td ${reportValueCell(defect.status)}</td>
-    <td style="background-color:#FFFFFF;border:1px solid ${GRID};padding:4px 8px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.15;font-weight:400;color:#000000;text-align:center;vertical-align:middle;">${defectJiraLink(defect, draft.jiraBaseUrl)}</td>
-    <td ${reportValueCell(defect.title.trim(), 'text-align:left;')}</td>
-    <td ${reportValueCell(defect.note.trim(), 'text-align:left;')}</td>
-  </tr>`,
-    )
-    .join('')}
+  ${defectRows(draft, defects)}
 </table>`
 }
 
@@ -562,7 +560,7 @@ export function formatReportBody(draft: Draft): string {
   </tr>
   <tr>
     <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:22px 18px 22px 18px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;vertical-align:top;height:236px;">
-      ${bulletList(draft)}
+      ${highlightsBlock(draft)}
     </td>
     <td colspan="2" style="background-color:${PANEL_BG};border:1px solid ${GRID};padding:24px;font-family:${BODY_FONT};font-size:${BODY_FONT_SIZE};line-height:1.35;color:#000000;text-align:center;vertical-align:middle;height:236px;">
       ${automationCoverageBlock(draft)}

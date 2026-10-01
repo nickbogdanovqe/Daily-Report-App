@@ -181,7 +181,7 @@ export function createEmptyDraft(): Draft {
     testExecutionSummaryRemarks: '',
     testExecutionSummaryRows: createDefaultExecutionRows(),
     jiraBaseUrl: '',
-    highlights: [],
+    highlightsMarkdown: '',
     defects: [],
   }
 }
@@ -190,9 +190,26 @@ type StoredDefect = Partial<Defect> & { severity?: unknown }
 type StoredListItem = Partial<ListItem>
 type StoredDesignRow = Partial<TestDesignSummaryRow>
 type StoredExecutionRow = Partial<TestExecutionSummaryRow>
-export type StoredDraft = Partial<Omit<Draft, 'overallStatus' | 'anticipatedTrend'>> & {
+export type StoredDraft = Partial<
+  Omit<Draft, 'overallStatus' | 'anticipatedTrend' | 'defects'>
+> & {
   overallStatus?: unknown
   anticipatedTrend?: unknown
+  defects?: StoredDefect[]
+  /** Pre-Markdown drafts stored highlights as a list of one-line items. */
+  highlights?: unknown
+}
+
+/** Keys from older draft shapes that are migrated into other fields below. */
+const LEGACY_DRAFT_KEYS = ['blockers', 'tasks', 'summary', 'highlights'] as const
+
+function omitLegacyKeys(parsed: StoredDraft): StoredDraft {
+  const copy: Record<string, unknown> = { ...parsed }
+  for (const key of LEGACY_DRAFT_KEYS) {
+    delete copy[key]
+  }
+  // Same object minus legacy keys; every remaining key is a StoredDraft key.
+  return copy as StoredDraft
 }
 
 function normalizeRagStatus(value: unknown): OverallStatus {
@@ -216,6 +233,10 @@ function normalizeListItems(items: StoredListItem[] | undefined): ListItem[] {
   }))
 }
 
+function normalizeOptionalText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined
+}
+
 function normalizeDefects(defects: StoredDefect[] | undefined): Defect[] {
   return (defects ?? []).map((defect) => ({
     id: defect.id ?? createId(),
@@ -224,6 +245,9 @@ function normalizeDefects(defects: StoredDefect[] | undefined): Defect[] {
     jiraId: defect.jiraId ?? '',
     link: defect.link ?? '',
     note: defect.note ?? '',
+    isProduction: defect.isProduction === true,
+    priority: normalizeOptionalText(defect.priority),
+    jiraStatus: normalizeOptionalText(defect.jiraStatus),
   }))
 }
 
@@ -272,6 +296,27 @@ const LEGACY_DESIGN_REMARKS = [
 ] as const
 const LEGACY_EXECUTION_REMARKS = ['Execution status will be updated after 05/26'] as const
 
+function isStoredListItemArray(value: unknown): value is StoredListItem[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'object' && item !== null)
+}
+
+/**
+ * Highlights used to be a list of one-line items (optionally with a Jira ID).
+ * Convert them to Markdown bullets so nothing is lost on upgrade.
+ */
+export function migrateLegacyHighlights(parsed: StoredDraft): string {
+  if (typeof parsed.highlightsMarkdown === 'string') return parsed.highlightsMarkdown
+  if (!isStoredListItemArray(parsed.highlights)) return ''
+
+  return normalizeListItems(parsed.highlights)
+    .filter((item) => item.text.trim())
+    .map((item) => {
+      const jiraId = (item.jiraId ?? '').trim().toUpperCase()
+      return jiraId ? `- ${jiraId} - ${item.text.trim()}` : `- ${item.text.trim()}`
+    })
+    .join('\n')
+}
+
 function migrateLegacySummary(parsed: StoredDraft): string {
   const ragReason = typeof parsed.ragReason === 'string' ? parsed.ragReason.trim() : ''
   if (ragReason) return ragReason
@@ -281,12 +326,7 @@ function migrateLegacySummary(parsed: StoredDraft): string {
 }
 
 export function normalizeDraft(parsed: StoredDraft): Draft {
-  const { blockers: _legacyBlockers, tasks: _legacyTasks, ...storedDraft } =
-    parsed as StoredDraft & {
-      blockers?: unknown
-      tasks?: unknown
-      summary?: unknown
-    }
+  const storedDraft = omitLegacyKeys(parsed)
 
   return {
     ...createEmptyDraft(),
@@ -310,7 +350,7 @@ export function normalizeDraft(parsed: StoredDraft): Draft {
     ),
     overallStatus: normalizeRagStatus(parsed.overallStatus),
     anticipatedTrend: normalizeRagStatus(parsed.anticipatedTrend ?? parsed.overallStatus),
-    highlights: normalizeListItems(parsed.highlights as StoredListItem[] | undefined),
+    highlightsMarkdown: migrateLegacyHighlights(parsed),
     inScopeItems: normalizeListItems(parsed.inScopeItems as StoredListItem[] | undefined),
     outOfScopeItems: normalizeListItems(
       parsed.outOfScopeItems as StoredListItem[] | undefined,
@@ -321,7 +361,7 @@ export function normalizeDraft(parsed: StoredDraft): Draft {
     testExecutionSummaryRows: normalizeExecutionRows(
       parsed.testExecutionSummaryRows as StoredExecutionRow[] | undefined,
     ),
-    defects: normalizeDefects(parsed.defects as StoredDefect[] | undefined),
+    defects: normalizeDefects(parsed.defects),
   }
 }
 

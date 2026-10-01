@@ -15,16 +15,19 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useState } from 'react'
 import type { Defect, DefectStatus } from '../types'
 import { DEFECT_STATUSES } from '../types'
 import { formatJiraUrl, hasJiraBaseUrl } from '../lib/jiraUrl'
 import { createId } from '../lib/storage'
 import { statusColors } from '../lib/reportTheme'
+import { DefectImportPanel } from './DefectImportPanel'
 
 interface DefectEditorProps {
   defects: Defect[]
   onChange: (defects: Defect[]) => void
   jiraBaseUrl: string
+  onJiraBaseUrlChange: (jiraBaseUrl: string) => void
 }
 
 function SortableDefectCard({
@@ -72,6 +75,19 @@ function SortableDefectCard({
             <circle cx="5" cy="12" r="1.25" />
             <circle cx="11" cy="12" r="1.25" />
           </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => onUpdate({ isProduction: !defect.isProduction })}
+          aria-pressed={defect.isProduction}
+          title={defect.isProduction ? 'Production defect (click to unmark)' : 'Mark as Production defect'}
+          className={`mt-1.5 shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold tracking-wide transition ${
+            defect.isProduction
+              ? 'border-red-300 bg-red-100 text-red-700 hover:bg-red-200'
+              : 'border-slate-200 bg-slate-50 text-slate-400 hover:border-red-300 hover:text-red-600'
+          }`}
+        >
+          PROD
         </button>
         <input
           type="text"
@@ -155,7 +171,19 @@ function SortableDefectCard({
           </label>
         )}
         <label className="block col-span-2 sm:col-span-3">
-          <span className="mb-1 block text-xs font-medium text-slate-500">Note</span>
+          <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
+            Note
+            {defect.priority && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                {defect.priority}
+              </span>
+            )}
+            {defect.jiraStatus && (
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                Jira: {defect.jiraStatus}
+              </span>
+            )}
+          </span>
           <input
             type="text"
             value={defect.note}
@@ -169,7 +197,13 @@ function SortableDefectCard({
   )
 }
 
-export function DefectEditor({ defects, onChange, jiraBaseUrl }: DefectEditorProps) {
+export function DefectEditor({
+  defects,
+  onChange,
+  jiraBaseUrl,
+  onJiraBaseUrlChange,
+}: DefectEditorProps) {
+  const [importOpen, setImportOpen] = useState(false)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -194,8 +228,14 @@ export function DefectEditor({ defects, onChange, jiraBaseUrl }: DefectEditorPro
         jiraId: '',
         link: '',
         note: '',
+        isProduction: false,
       },
     ])
+  }
+
+  const handleImport = (imported: Defect[], nextJiraBaseUrl: string) => {
+    onChange(imported)
+    if (nextJiraBaseUrl !== jiraBaseUrl) onJiraBaseUrlChange(nextJiraBaseUrl)
   }
 
   const updateDefect = (id: string, patch: Partial<Defect>) => {
@@ -208,6 +248,25 @@ export function DefectEditor({ defects, onChange, jiraBaseUrl }: DefectEditorPro
 
   return (
     <div className="space-y-3">
+      {importOpen ? (
+        <DefectImportPanel
+          defects={defects}
+          jiraBaseUrl={jiraBaseUrl}
+          onImport={handleImport}
+          onClose={() => setImportOpen(false)}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-violet-200 bg-white px-3 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:border-violet-400 hover:bg-violet-50"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M8 2v8M5 7l3 3 3-3M3 12.5h10" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Import from Jira
+        </button>
+      )}
       {!hasJiraBaseUrl(jiraBaseUrl) && (
         <p className="rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs text-amber-900">
           Set JIRA base URL in report details to auto-build browse links from ticket IDs.

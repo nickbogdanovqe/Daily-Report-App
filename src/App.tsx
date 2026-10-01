@@ -1,6 +1,7 @@
 import { DayRolloverBanner } from './components/DayRolloverBanner'
 import { DefectEditor } from './components/DefectEditor'
 import { EditableList } from './components/EditableList'
+import { MarkdownEditor } from './components/MarkdownEditor'
 import { ReportHistoryPicker } from './components/ReportHistoryPicker'
 import { ReportMeta } from './components/ReportMeta'
 import { ReportPreview } from './components/ReportPreview'
@@ -9,8 +10,11 @@ import { TestSummaryTables } from './components/TestSummaryTables'
 import { Toolbar } from './components/Toolbar'
 import { ViewingPastBanner } from './components/ViewingPastBanner'
 import { useDraft } from './hooks/useDraft'
-import { hasJiraBaseUrl } from './lib/jiraUrl'
 import { todayIsoDate } from './lib/storage'
+
+function countHighlightLines(markdown: string): number {
+  return markdown.split('\n').filter((line) => line.trim()).length
+}
 
 function App() {
   const {
@@ -63,17 +67,14 @@ function App() {
             <ReportMeta draft={draft} onChange={updateDraft} />
 
             <Section
-              title="Highlights"
-              count={draft.highlights.length}
+              title="Key Highlights"
+              count={countHighlightLines(draft.highlightsMarkdown)}
               variant="highlights"
               storageKey="highlights"
             >
-              <EditableList
-                items={draft.highlights}
-                onChange={(highlights) => updateDraft({ highlights })}
-                placeholder="e.g. Completed smoke testing on release candidate"
-                addLabel="Add highlight"
-                showJiraId={hasJiraBaseUrl(draft.jiraBaseUrl)}
+              <MarkdownEditor
+                value={draft.highlightsMarkdown}
+                onChange={(highlightsMarkdown) => updateDraft({ highlightsMarkdown })}
               />
             </Section>
 
@@ -124,6 +125,7 @@ function App() {
                 defects={draft.defects}
                 onChange={(defects) => updateDraft({ defects })}
                 jiraBaseUrl={draft.jiraBaseUrl}
+                onJiraBaseUrlChange={(jiraBaseUrl) => updateDraft({ jiraBaseUrl })}
               />
             </Section>
           </fieldset>

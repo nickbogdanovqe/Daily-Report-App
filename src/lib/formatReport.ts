@@ -1,6 +1,8 @@
-import type { Draft, ListItem } from '../types'
+import type { Defect, Draft } from '../types'
 import { formatAutomationCoverageText, getAutomationTotals } from './automationCoverage'
+import { groupDefects, hasDefectContent } from './defectGroups'
 import { formatJiraUrl } from './jiraUrl'
+import { isMarkdownEmpty, renderMarkdownText } from './markdownLite'
 import {
   resolveReportTitle,
   resolveTestDesignSummaryTitle,
@@ -31,28 +33,6 @@ function formatDateMonthDay(isoDate: string): string {
 
 function titleText(draft: Draft): string {
   return resolveReportTitle(draft, formatDateShort)
-}
-
-function formatBulletList(
-  items: ListItem[],
-  emptyLabel: string,
-  jiraBaseUrl = '',
-  prefix = '',
-): string {
-  const filled = items.filter((i) => i.text.trim())
-  if (filled.length === 0) return emptyLabel
-  return filled
-    .map((item) => {
-      const jiraId = (item.jiraId ?? '').trim().toUpperCase()
-      const jiraUrl = formatJiraUrl(jiraBaseUrl, jiraId)
-      const jiraText = jiraId
-        ? jiraUrl
-          ? `[${jiraId}] ${jiraUrl} - `
-          : `[${jiraId}] `
-        : ''
-      return `• ${jiraText}${prefix}${item.text.trim()}`
-    })
-    .join('\n')
 }
 
 function formatAutomationCoverage(draft: Draft): string {
@@ -105,24 +85,32 @@ function appendOptionalSummaryTables(draft: Draft, lines: string[]): void {
   }
 }
 
+function formatDefectLine(defect: Defect, jiraBaseUrl: string): string {
+  const jiraId = (defect.jiraId ?? '').trim().toUpperCase()
+  const jiraUrl = formatJiraUrl(jiraBaseUrl, jiraId) || defect.link.trim()
+  const jiraText = jiraId ? (jiraUrl ? `${jiraId} (${jiraUrl})` : jiraId) : 'N/A'
+  const title = defect.title.trim() || 'N/A'
+  const note = defect.note.trim() || 'N/A'
+  return `${defect.status} | ${jiraText} | ${title} | ${note}`
+}
+
 function appendDefectsSummary(draft: Draft, lines: string[]): void {
-  const defects = draft.defects.filter(
-    (defect) =>
-      defect.title.trim() ||
-      (defect.jiraId ?? '').trim() ||
-      defect.note.trim() ||
-      defect.link.trim(),
-  )
+  const defects = draft.defects.filter(hasDefectContent)
   if (defects.length === 0) return
 
   lines.push('', 'Defects Summary:')
-  for (const defect of defects) {
-    const jiraId = (defect.jiraId ?? '').trim().toUpperCase()
-    const jiraUrl = formatJiraUrl(draft.jiraBaseUrl, jiraId) || defect.link.trim()
-    const jiraText = jiraId ? (jiraUrl ? `${jiraId} (${jiraUrl})` : jiraId) : 'N/A'
-    const title = defect.title.trim() || 'N/A'
-    const note = defect.note.trim() || 'N/A'
-    lines.push(`${defect.status} | ${jiraText} | ${title} | ${note}`)
+
+  const { production, nonProduction } = groupDefects(defects)
+  if (production.length === 0) {
+    lines.push(...defects.map((defect) => formatDefectLine(defect, draft.jiraBaseUrl)))
+    return
+  }
+
+  lines.push('Production:')
+  lines.push(...production.map((defect) => formatDefectLine(defect, draft.jiraBaseUrl)))
+  if (nonProduction.length > 0) {
+    lines.push('Non-Production:')
+    lines.push(...nonProduction.map((defect) => formatDefectLine(defect, draft.jiraBaseUrl)))
   }
 }
 
@@ -152,7 +140,9 @@ export function formatReport(draft: Draft): string {
     'Key Highlights',
   ]
 
-  const highlightText = formatBulletList(draft.highlights, '', draft.jiraBaseUrl)
+  const highlightText = isMarkdownEmpty(draft.highlightsMarkdown)
+    ? ''
+    : renderMarkdownText(draft.highlightsMarkdown, draft.jiraBaseUrl)
   lines.push(highlightText || 'No key highlights listed.')
 
   lines.push(

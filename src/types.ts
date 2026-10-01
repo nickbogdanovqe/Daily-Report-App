@@ -1,12 +1,15 @@
 export type OverallStatus = 'Red' | 'Amber' | 'Green'
 
-export type DefectStatus =
-  | 'New'
-  | 'Open'
-  | 'In progress'
-  | 'Fixed'
-  | 'Verified'
-  | "Won't fix"
+export const DEFECT_STATUSES = [
+  'New',
+  'Open',
+  'In progress',
+  'Fixed',
+  'Verified',
+  "Won't fix",
+] as const
+
+export type DefectStatus = (typeof DEFECT_STATUSES)[number]
 
 export interface ListItem {
   id: string
@@ -21,6 +24,12 @@ export interface Defect {
   jiraId?: string
   link: string
   note: string
+  /** Production defects are grouped first in the report. */
+  isProduction: boolean
+  /** Jira priority name (e.g. "Critical"); populated by the Jira import. */
+  priority?: string
+  /** Raw Jira status name (e.g. "Peer Review"); populated by the Jira import. */
+  jiraStatus?: string
 }
 
 export interface TestDesignSummaryRow {
@@ -78,7 +87,8 @@ export interface Draft {
   testExecutionSummaryRemarks: string
   testExecutionSummaryRows: TestExecutionSummaryRow[]
   jiraBaseUrl: string
-  highlights: ListItem[]
+  /** Key Highlights authored in a small Markdown subset (see lib/markdownLite). */
+  highlightsMarkdown: string
   defects: Defect[]
 }
 
@@ -86,13 +96,4 @@ export const OVERALL_STATUSES: OverallStatus[] = [
   'Red',
   'Amber',
   'Green',
-]
-
-export const DEFECT_STATUSES: DefectStatus[] = [
-  'New',
-  'Open',
-  'In progress',
-  'Fixed',
-  'Verified',
-  "Won't fix",
 ]

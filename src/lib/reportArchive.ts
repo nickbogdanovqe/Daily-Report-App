@@ -1,4 +1,5 @@
 import type { Draft } from '../types'
+import { hasDefectContent } from './defectGroups'
 
 export const ARCHIVE_KEY = 'daily-report-archive-v1'
 export const ARCHIVE_RETENTION_DAYS = 14
@@ -17,18 +18,12 @@ export function hasReportContent(draft: Draft): boolean {
       draft.testEvidencePath.trim() ||
       draft.testArtifacts.trim() ||
       draft.environmentDowntime.trim() ||
-      draft.highlights.some((item) => item.text.trim()) ||
+      draft.highlightsMarkdown.trim() ||
       draft.inScopeItems.some((item) => item.text.trim()) ||
       draft.outOfScopeItems.some((item) => item.text.trim()) ||
       draft.showTestDesignSummary ||
       draft.showTestExecutionSummary ||
-      draft.defects.some(
-        (defect) =>
-          defect.title.trim() ||
-          (defect.jiraId ?? '').trim() ||
-          defect.note.trim() ||
-          defect.link.trim(),
-      ),
+      draft.defects.some(hasDefectContent),
   )
 }
 
