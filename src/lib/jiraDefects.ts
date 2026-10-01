@@ -146,7 +146,8 @@ export function mapJiraIssueToImport(issue: JiraIssue): ImportedDefect {
     isProduction: isProductionIssue(issue),
     priority,
     jiraStatus,
-    note: priority ?? '',
+    // Notes are reserved for the QE's own commentary; priority has its own field.
+    note: '',
   }
 }
 

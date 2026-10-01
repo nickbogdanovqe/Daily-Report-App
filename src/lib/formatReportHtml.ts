@@ -6,6 +6,7 @@ import {
 } from './automationCoverage'
 import { buildAutomationPieChartHtml } from './automationPieChartHtml'
 import { groupDefects, hasDefectContent } from './defectGroups'
+import { buildDefectMatrix } from './defectMatrix'
 import { formatJiraUrl } from './jiraUrl'
 import { isMarkdownEmpty, renderMarkdownHtml } from './markdownLite'
 import {
@@ -462,6 +463,70 @@ function defectRows(draft: Draft, defects: Defect[]): string {
   return `${defectGroupRow('Production')}${productionRows}${defectGroupRow('Non-Production')}${nonProductionRows}`
 }
 
+const MATRIX_STATUS_COL_PX = 200
+
+function defectsMatrixBlock(defects: Defect[]): string {
+  const matrix = buildDefectMatrix(defects)
+  if (matrix.rows.length === 0) return ''
+
+  const countColumns = matrix.priorities.length + 1 // + Total
+  const countColPx = Math.floor((WIDTH - MATRIX_STATUS_COL_PX) / countColumns)
+  const colgroup = [
+    `<col style="width:${MATRIX_STATUS_COL_PX}px;" />`,
+    ...Array.from({ length: countColumns }, () => `<col style="width:${countColPx}px;" />`),
+  ].join('\n    ')
+
+  const headerRow = [
+    `<td ${reportHeaderCell('Status', 'text-align:left;')}</td>`,
+    ...matrix.priorities.map((priority) => `<td ${reportHeaderCell(priority)}</td>`),
+    `<td ${reportHeaderCell('Total')}</td>`,
+  ].join('\n    ')
+
+  const bodyRows = matrix.rows
+    .map((row) =>
+      [
+        `<td ${reportValueCell(row.status, 'text-align:left;font-weight:700;')}</td>`,
+        ...matrix.priorities.map(
+          (priority) => `<td ${reportValueCell(String(row.counts[priority]))}</td>`,
+        ),
+        `<td ${reportValueCell(String(row.total), 'font-weight:700;')}</td>`,
+      ].join('\n    '),
+    )
+    .map((cells) => `\n  <tr>\n    ${cells}\n  </tr>`)
+    .join('')
+
+  const totalsRow = [
+    `<td ${totalValueCell('Total Unique Issues', 'text-align:left;font-weight:700;')}</td>`,
+    ...matrix.priorities.map(
+      (priority) => `<td ${totalValueCell(String(matrix.totals[priority]), 'font-weight:700;')}</td>`,
+    ),
+    `<td ${totalValueCell(String(matrix.grandTotal), 'font-weight:700;')}</td>`,
+  ].join('\n    ')
+
+  return `
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
+  <colgroup>
+    ${colgroup}
+  </colgroup>
+  <tr>
+    <td colspan="${countColumns + 1}" style="background-color:${BLUE};border:1px solid ${GRID};padding:4px 8px;font-family:${HEADER_FONT};font-size:${HEADER_FONT_SIZE};line-height:1.1;font-weight:700;color:#FFFFFF;text-align:center;vertical-align:middle;">
+      Defects by Status and Priority
+    </td>
+  </tr>
+  <tr>
+    ${headerRow}
+  </tr>${bodyRows}
+  <tr>
+    ${totalsRow}
+  </tr>
+</table>
+<table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;clear:both;">
+  <tr>
+    <td style="height:14px;line-height:14px;font-size:0;">&nbsp;</td>
+  </tr>
+</table>`
+}
+
 function defectsSummaryTableBlock(draft: Draft): string {
   const defects = draft.defects.filter(hasDefectContent)
 
@@ -469,6 +534,7 @@ function defectsSummaryTableBlock(draft: Draft): string {
 
   return `
 ${summaryLabel('Defects Summary:')}
+${defectsMatrixBlock(defects)}
 <table width="${WIDTH}" cellpadding="0" cellspacing="0" border="0" role="presentation" align="left" style="border-collapse:collapse;width:${WIDTH}px;max-width:${WIDTH}px;table-layout:fixed;font-family:${FONT};clear:both;">
   <colgroup>
     <col style="width:140px;" />

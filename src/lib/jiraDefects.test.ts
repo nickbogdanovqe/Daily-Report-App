@@ -116,7 +116,7 @@ describe('mapJiraIssueToImport', () => {
       isProduction: true,
       priority: 'Critical',
       jiraStatus: 'Backlog',
-      note: 'Critical',
+      note: '',
     })
   })
 })
@@ -215,14 +215,14 @@ describe('mergeImportedDefects', () => {
     expect(result[0]?.jiraId).toBe('DIGENG-3')
   })
 
-  it('uses the imported note when the existing note is empty', () => {
+  it('leaves the note empty when neither side has one', () => {
     const result = mergeImportedDefects(
       [defect({ id: 'x', jiraId: 'DIGENG-1', note: '   ', jiraStatus: 'Ready' })],
-      [imported({ jiraId: 'DIGENG-1', note: 'Major' })],
+      [imported({ jiraId: 'DIGENG-1' })],
       'merge',
       createId,
     )
-    expect(result[0]?.note).toBe('Major')
+    expect(result[0]?.note).toBe('')
   })
 })
 

@@ -1,6 +1,7 @@
 import type { Defect, Draft } from '../types'
 import { formatAutomationCoverageText, getAutomationTotals } from './automationCoverage'
 import { groupDefects, hasDefectContent } from './defectGroups'
+import { buildDefectMatrix, type MatrixPriority } from './defectMatrix'
 import { formatJiraUrl } from './jiraUrl'
 import { isMarkdownEmpty, renderMarkdownText } from './markdownLite'
 import {
@@ -94,11 +95,28 @@ function formatDefectLine(defect: Defect, jiraBaseUrl: string): string {
   return `${defect.status} | ${jiraText} | ${title} | ${note}`
 }
 
+function appendDefectMatrix(defects: Defect[], lines: string[]): void {
+  const matrix = buildDefectMatrix(defects)
+  if (matrix.rows.length === 0) return
+
+  const countsLine = (counts: Record<MatrixPriority, number>, total: number): string =>
+    [...matrix.priorities.map((priority) => `${priority} ${counts[priority]}`), `Total ${total}`].join(
+      ' | ',
+    )
+
+  lines.push('Defects by Status and Priority:')
+  for (const row of matrix.rows) {
+    lines.push(`${row.status}: ${countsLine(row.counts, row.total)}`)
+  }
+  lines.push(`Total Unique Issues: ${countsLine(matrix.totals, matrix.grandTotal)}`, '')
+}
+
 function appendDefectsSummary(draft: Draft, lines: string[]): void {
   const defects = draft.defects.filter(hasDefectContent)
   if (defects.length === 0) return
 
   lines.push('', 'Defects Summary:')
+  appendDefectMatrix(defects, lines)
 
   const { production, nonProduction } = groupDefects(defects)
   if (production.length === 0) {
