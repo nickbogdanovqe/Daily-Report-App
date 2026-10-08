@@ -4,7 +4,8 @@ import { priorityRank } from './jiraDefects'
 
 /**
  * Status x priority counts for the "Defects by Status and Priority" block
- * that sits above the detailed defects table, mirroring Jira's summary view.
+ * that sits above the detailed defects table. Rows use the card's editable
+ * report status so the counts always agree with the table below.
  */
 
 export const MATRIX_PRIORITIES = ['Blocker', 'Critical', 'Major', 'Minor', 'Trivial'] as const
@@ -13,7 +14,7 @@ export const UNSET_PRIORITY = 'Unset'
 export type MatrixPriority = (typeof MATRIX_PRIORITIES)[number] | typeof UNSET_PRIORITY
 
 export interface DefectMatrixRow {
-  /** Upper-cased status label, e.g. "BACKLOG". */
+  /** Upper-cased status label, e.g. "IN PROGRESS". */
   status: string
   counts: Record<MatrixPriority, number>
   total: number
@@ -39,8 +40,7 @@ export function matrixPriority(priority?: string): MatrixPriority {
 }
 
 function statusLabel(defect: Defect): string {
-  const raw = defect.jiraStatus?.trim() || defect.status
-  return raw.toUpperCase()
+  return defect.status.toUpperCase()
 }
 
 export function buildDefectMatrix(defects: Defect[]): DefectMatrix {

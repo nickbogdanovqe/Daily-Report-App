@@ -44,7 +44,7 @@ The script writes `jira-defects.json` (gitignored), copies it to the clipboard o
 - **Merge (keep my notes)** (default): refreshes title / status / priority on matching Jira IDs, keeps the notes you typed, adds new defects, removes Jira-sourced defects no longer returned, keeps manual defects.
 - **Replace all**: discards the current defect list.
 
-Imported defects arrive with an empty **Notes** field (priority and Jira status are shown as chips on the card instead). The report prints a **Defects by Status and Priority** count matrix (rows = Jira status, columns = Blocker / Critical / Major / Minor / Trivial) above the detailed table.
+Imported defects arrive with an empty **Notes** field; the raw Jira status is shown as a chip on the card. The report prints a **Defects by Status and Priority** count matrix (rows = the card's Status, columns = the card's Priority: Blocker / Critical / Major / Minor / Trivial) above the detailed table, so editing Status or Priority on a card updates both tables. Re-importing in **Merge** mode resets Status and Priority to the Jira values.
 
 Production defects (label `aurora_production_issue` or `| Production |` in the summary) are grouped first in the report, then ordered by priority. Toggle **PROD** on any card to move it between groups. Jira statuses map to report statuses as Backlog -> New, Ready -> Open, In Progress / Peer Review -> In progress, Testing / Acceptance -> Fixed, Done -> Verified, Cancelled -> Won't fix.
 

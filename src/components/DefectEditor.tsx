@@ -18,6 +18,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useState } from 'react'
 import type { Defect, DefectStatus } from '../types'
 import { DEFECT_STATUSES } from '../types'
+import { MATRIX_PRIORITIES } from '../lib/defectMatrix'
 import { formatJiraUrl, hasJiraBaseUrl } from '../lib/jiraUrl'
 import { createId } from '../lib/storage'
 import { statusColors } from '../lib/reportTheme'
@@ -52,6 +53,9 @@ function SortableDefectCard({
   const st = statusColors(defect.status)
   const autoLink = formatJiraUrl(jiraBaseUrl, defect.jiraId ?? '')
   const useAutoLink = hasJiraBaseUrl(jiraBaseUrl)
+  const priority = defect.priority?.trim() ?? ''
+  const priorityOptions: string[] = [...MATRIX_PRIORITIES]
+  if (priority && !priorityOptions.includes(priority)) priorityOptions.push(priority)
 
   return (
     <div
@@ -131,6 +135,21 @@ function SortableDefectCard({
           </select>
         </label>
         <label className="block">
+          <span className="mb-1 block text-xs font-medium text-slate-500">Priority</span>
+          <select
+            value={priority}
+            onChange={(e) => onUpdate({ priority: e.target.value || undefined })}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-2 py-2 text-sm text-slate-800 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          >
+            <option value="">Not set</option>
+            {priorityOptions.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="col-span-2 block sm:col-span-1">
           <span className="mb-1 block text-xs font-medium text-slate-500">JIRA ID</span>
           <input
             type="text"
@@ -141,7 +160,7 @@ function SortableDefectCard({
           />
         </label>
         {useAutoLink ? (
-          <div className="col-span-2 block sm:col-span-1">
+          <div className="col-span-2 block sm:col-span-3">
             <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
             {autoLink ? (
               <a
@@ -159,7 +178,7 @@ function SortableDefectCard({
             )}
           </div>
         ) : (
-          <label className="col-span-2 block sm:col-span-1">
+          <label className="col-span-2 block sm:col-span-3">
             <span className="mb-1 block text-xs font-medium text-slate-500">Link</span>
             <input
               type="url"
@@ -173,11 +192,6 @@ function SortableDefectCard({
         <label className="block col-span-2 sm:col-span-3">
           <span className="mb-1 flex items-center gap-2 text-xs font-medium text-slate-500">
             Note
-            {defect.priority && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                {defect.priority}
-              </span>
-            )}
             {defect.jiraStatus && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
                 Jira: {defect.jiraStatus}
